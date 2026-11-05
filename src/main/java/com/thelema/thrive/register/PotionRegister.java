@@ -37,6 +37,7 @@ public class PotionRegister {
             POTION.register("super_long_milk", () -> new Potion("milk",
                     new MobEffectInstance(EffectRegister.MILK, 38400)));// 32min
 
+
     // ============ 迅捷 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_SWIFTNESS =
             longP("super_long_swiftness", "swiftness", MobEffects.MOVEMENT_SPEED, 9600);
@@ -179,10 +180,6 @@ public class PotionRegister {
     public static void onRegisterBrewingRecipes(RegisterBrewingRecipesEvent event) {
         var b = event.getBuilder();
 
-        // 牛奶：粗制 + 奶桶 = 牛奶药水。红石延长 → 牡丹蜂蜜超长效
-        b.addMix(Potions.AWKWARD, Items.MILK_BUCKET, PotionRegister.MILK);
-        b.addMix(MILK, Items.REDSTONE, LONG_MILK);
-
         // 1 蒲公英 → 缓降
         b.addMix(Potions.LONG_SLOW_FALLING, ItemRegister.DANDELION_HONEY.get(), SUPER_LONG_SLOW_FALLING);
 
@@ -205,9 +202,10 @@ public class PotionRegister {
         // 7 橙郁金香 → 抗火
         b.addMix(Potions.LONG_FIRE_RESISTANCE, ItemRegister.ORANGE_TULIP_HONEY.get(), SUPER_LONG_FIRE_RESISTANCE);
 
-        // 8 白郁金香 → 跳跃
-        b.addMix(Potions.LONG_LEAPING, ItemRegister.WHITE_TULIP_HONEY.get(), SUPER_LONG_LEAPING);
-        b.addMix(Potions.STRONG_LEAPING, ItemRegister.WHITE_TULIP_HONEY.get(), SUPER_STRONG_LEAPING);
+        // 8 白郁金香 → 牛奶
+        b.addMix(Potions.AWKWARD, ItemRegister.WHITE_TULIP_HONEY.get(), PotionRegister.MILK);
+        b.addMix(MILK, Items.REDSTONE, LONG_MILK);
+        b.addMix(PotionRegister.LONG_MILK, ItemRegister.WHITE_TULIP_HONEY.get(), SUPER_LONG_MILK);
 
         // 9 粉郁金香 → 恢复
         b.addMix(Potions.LONG_REGENERATION, ItemRegister.PINK_TULIP_HONEY.get(), SUPER_LONG_REGENERATION);
@@ -216,7 +214,7 @@ public class PotionRegister {
         // 10 滨菊 → 虚弱
         b.addMix(Potions.LONG_WEAKNESS, ItemRegister.OXEYE_DAISY_HONEY.get(), SUPER_LONG_WEAKNESS);
 
-        // 11 矢车菊
+        // 11 矢车菊 → 迅捷
         b.addMix(Potions.LONG_SWIFTNESS, ItemRegister.CORNFLOWER_HONEY.get(), SUPER_LONG_SWIFTNESS);
         b.addMix(Potions.STRONG_SWIFTNESS, ItemRegister.CORNFLOWER_HONEY.get(), SUPER_STRONG_SWIFTNESS);
 
@@ -238,8 +236,8 @@ public class PotionRegister {
         // 16 丁香 → 蓄风
         b.addMix(Potions.WIND_CHARGED, ItemRegister.LILAC_HONEY.get(), SUPER_LONG_WIND_CHARGED);
 
-        // 17 牡丹 —— 牛奶
-        b.addMix(LONG_MILK, ItemRegister.PEONY_HONEY.get(), SUPER_LONG_MILK);
+        // 17 牡丹 —— 无
+
 
         // 18 玫瑰丛 → 伤害
         b.addMix(Potions.STRONG_HARMING, ItemRegister.ROSE_BUSH_HONEY.get(), SUPER_STRONG_HARMING);
@@ -250,7 +248,9 @@ public class PotionRegister {
         // 20 盛开杜鹃叶 → 虫蚀
         b.addMix(Potions.INFESTED, ItemRegister.FLOWERING_AZALEA_LEAVES_HONEY.get(), SUPER_LONG_INFESTED);
 
-        // 21 盛开杜鹃 —— 空
+        // 21 盛开杜鹃 —— 跳跃
+        b.addMix(Potions.LONG_LEAPING, ItemRegister.FLOWERING_AZALEA_HONEY.get(), SUPER_LONG_LEAPING);
+        b.addMix(Potions.STRONG_LEAPING, ItemRegister.FLOWERING_AZALEA_HONEY.get(), SUPER_STRONG_LEAPING);
 
         // 22 红树胎生苗 → 神龟
         b.addMix(Potions.LONG_TURTLE_MASTER, ItemRegister.MANGROVE_PROPAGULE_HONEY.get(), SUPER_LONG_TURTLE_MASTER);
