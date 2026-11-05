@@ -20,16 +20,12 @@ import net.minecraft.world.level.block.DoublePlantBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
-import java.util.function.Predicate;
-
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
 final class MossHelper {
 
     private MossHelper() {}
-
-    static final int TICKS_PER_RING = 20;
-    static final int MAX_RING = 64;
 
     static final ResourceKey<Biome> TARGET = ResourceKey.create(
             Registries.BIOME, ResourceLocation.fromNamespaceAndPath("thrive", "moss"));
@@ -67,6 +63,26 @@ final class MossHelper {
             Blocks.FLOWERING_AZALEA, Blocks.FLOWERING_AZALEA
     };
 
+    // ───── 群系过滤（唯一的群系判断入口） ─────
+
+    /** 跳过已是 moss 的坐标。扩张类 modifier 用。 */
+    static PosApplier skipMoss(PosApplier inner) {
+        return (be, p) -> {
+            if (be.getLevel().getBiome(p).is(TARGET)) return;
+            inner.apply(be, p);
+        };
+    }
+
+    /** 只处理已是 moss 的坐标。一次转换后造景用。 */
+    static PosApplier onlyMoss(PosApplier inner) {
+        return (be, p) -> {
+            if (!be.getLevel().getBiome(p).is(TARGET)) return;
+            inner.apply(be, p);
+        };
+    }
+
+    // ───── 地形判断 ─────
+
     static boolean isNaturalTerrain(BlockState s) {
         Block b = s.getBlock();
         return s.is(BlockTags.DIRT) || s.is(BlockTags.SAND)
@@ -83,22 +99,24 @@ final class MossHelper {
                 || b == Blocks.SCULK_CATALYST;
     }
 
-    /** 在环上随机找一处 moss 表面尝试放湖。accept 决定该 surface 是否允许放湖。 */
-    static PosApplier lake(Predicate<BlockPos> accept) {
-        return (be, p) -> {
-            if (!(be.getLevel() instanceof ServerLevel level)) return;
-            if (!level.getBlockState(p).isAir()) return;
-            if (!level.getBlockState(p.below()).is(Blocks.MOSS_BLOCK)) return;
-            if (!accept.test(p)) return;
-            if (level.random.nextInt(4) != 0) return;
-            Lake.placeAt(level, p, level.random,
-                    FluidRegister.LANTERN_BERRY_JUICE_BLOCK.get().defaultBlockState(),
-                    Blocks.MOSS_BLOCK.defaultBlockState());
-        };
+    // ───── 放湖 ─────
+
+    /** 在 moss 表面随机放一盏灯笼莓汁湖。群系判断由调用方包装。 */
+    static void lake(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
+        if (!level.getBlockState(p).isAir()) return;
+        if (!level.getBlockState(p.below()).is(Blocks.MOSS_BLOCK)) return;
+        if (level.random.nextInt(4) != 0) return;
+        Lake.placeAt(level, p, level.random,
+                FluidRegister.LANTERN_BERRY_JUICE_BLOCK.get().defaultBlockState(),
+                Blocks.MOSS_BLOCK.defaultBlockState());
     }
 
+    // ───── 造景 ─────
+
     /** 纯工具：不做群系判断，调用方决定是否处理当前点。 */
-    static void deco(ServerLevel level, BlockPos p) {
+    static void deco(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         if (!level.getBlockState(p).isAir()) return;
 
         RandomSource random = level.random;

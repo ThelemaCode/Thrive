@@ -1,9 +1,9 @@
 package com.thelema.thrive.generic.blockentity.modifier.moss;
 
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
-import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
+import com.thelema.thrive.generic.blockentity.modifier.BiomeTypeChanger;
+import com.thelema.thrive.generic.blockentity.modifier.PhasedModifier;
 import com.thelema.thrive.generic.blockentity.modifier.Ring;
-import com.thelema.thrive.generic.blockentity.modifier.Succession;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -16,16 +16,16 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Set;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
-import static com.thelema.thrive.generic.blockentity.modifier.moss.MossHelper.lake;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
-public class PlainsToMoss implements BiomeModifier {
-
-    static final int PHASE_REWRITE = 0;
-    static final int PHASE_SURFACE = 1;
-    static final int PHASE_LAKE = 2;
-    static final int PHASE_DECO = 3;
-    static final int PHASE_DONE = 4;
+/**
+ * 平原 → Moss 一次性转换。
+ * <p>
+ * BE 在 plains 启动，REWRITE 把 Ring 内 plains 改成 moss，
+ * 后续阶段靠 {@link MossHelper#onlyMoss} 只处理本次转换出的 moss，不碰原版/其他 moss。
+ */
+public class PlainsToMoss extends PhasedModifier {
 
     static final ResourceKey<Biome> SOURCE = ResourceKey.create(
             Registries.BIOME, ResourceLocation.withDefaultNamespace("plains"));
@@ -43,36 +43,26 @@ public class PlainsToMoss implements BiomeModifier {
             Blocks.STONE, Blocks.SAND, Blocks.GRAVEL, Blocks.CLAY,
             Blocks.MYCELIUM, Blocks.SNOW_BLOCK);
 
-    private static final Succession PLAINS_TO_MOSS = new Succession(SOURCE, MossHelper.TARGET);
+    private static final BiomeTypeChanger PLAINS_TO_MOSS =
+            new BiomeTypeChanger(SOURCE, MossHelper.TARGET);
 
-    @Override
-    public boolean canUse(ServerLevel level, BiomeCoreBlockEntity be) {
-        return level.getBiome(be.getBlockPos()).is(SOURCE);
+    public PlainsToMoss() {
+        addBS (Ring.TICK_10, PLAINS_TO_MOSS);                                    // REWRITE
+        addPos(Ring.TICK_10, MossHelper.onlyMoss(PlainsToMoss::surface));        // SURFACE
+        addPos(Ring.TICK_20, MossHelper.onlyMoss(MossHelper::lake));             // LAKE
+        addPos(Ring.TICK_10, MossHelper.onlyMoss(MossHelper::deco));             // DECO
+        addFinish(MossHelper.TREE_MOSS);                                          // DONE
     }
 
     @Override
-    public boolean tick(ServerLevel level, BiomeCoreBlockEntity be) {
-        int phase = getPhase(be);
-
-        if (phase >= PHASE_DONE) {
-            replaceStructure(level, be, MossHelper.TREE_MOSS);
-            return true;
-        }
-
-        boolean done = switch (phase) {
-            case PHASE_REWRITE -> forBS(be, Ring.FAST_I, PLAINS_TO_MOSS);
-            case PHASE_SURFACE -> forPos(be, Ring.FAST_I, (b, p) -> surface(level, p));
-            case PHASE_LAKE    -> forPos(be, Ring.DEFAULT, lake(p -> true));
-            case PHASE_DECO    -> forPos(be, Ring.FAST_I, (b, p) -> MossHelper.deco(level, p));
-            default -> true;
-        };
-
-        if (done) nextPhase(be);
-        return false;
+    public boolean canUse(BiomeCoreBlockEntity be) {
+        return be.getLevel().getBiome(be.getBlockPos()).is(SOURCE);
     }
 
-    static void surface(ServerLevel level, BlockPos p) {
-        if (!level.getBiome(p).is(MossHelper.TARGET)) return;
+    // ───── 地表（清原版植物，铺苔藓块） ─────
+
+    static void surface(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         BlockState s = level.getBlockState(p);
         if (s.isAir()) return;
         if (REMOVE.contains(s.getBlock())) {

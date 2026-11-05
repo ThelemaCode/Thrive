@@ -1,6 +1,6 @@
 package com.thelema.thrive.client.render.entity;
 
-import com.thelema.thrive.generic.entity.GardenWitch;
+import com.thelema.thrive.generic.entity.mob.GardenWitch;
 import net.minecraft.client.model.WitchModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

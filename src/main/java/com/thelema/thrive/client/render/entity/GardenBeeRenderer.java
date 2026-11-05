@@ -1,7 +1,7 @@
 package com.thelema.thrive.client.render.entity;
 
 import com.thelema.thrive.client.model.entity.GardenBeeModel;
-import com.thelema.thrive.generic.entity.GardenBee;
+import com.thelema.thrive.generic.entity.mob.GardenBee;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;

@@ -1,11 +1,7 @@
 package com.thelema.thrive.register;
 
 import com.thelema.thrive.ThriveMod;
-import com.thelema.thrive.generic.effect.Appetite;
-import com.thelema.thrive.generic.effect.Blinding;
-import com.thelema.thrive.generic.effect.LanternBerryJuiceEffect;
-import com.thelema.thrive.generic.effect.Milk;
-import com.thelema.thrive.generic.effect.SuperHunger;
+import com.thelema.thrive.generic.effect.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
 import net.neoforged.bus.api.IEventBus;
@@ -26,5 +22,7 @@ public class EffectRegister {
     public static final DeferredHolder<MobEffect, Appetite> APPETITE = EFFECT.register("appetite", Appetite::new);
     public static final DeferredHolder<MobEffect, Blinding> BLINDING = EFFECT.register("blinding", Blinding::new);
     public static final DeferredHolder<MobEffect, Milk> MILK = EFFECT.register("milk", Milk::new);
+    public static final DeferredHolder<MobEffect, Moss> MOSS = EFFECT.register("moss", Moss::new);
+
 
 }

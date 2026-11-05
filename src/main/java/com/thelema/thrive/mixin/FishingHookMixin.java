@@ -2,18 +2,28 @@ package com.thelema.thrive.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.thelema.thrive.generic.entity.misc.FishingArea;
 import com.thelema.thrive.register.FluidRegister;
 import com.thelema.thrive.register.ParticleRegister;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+
+import java.util.Comparator;
+
 @Mixin(FishingHook.class)
 public abstract class FishingHookMixin {
 
@@ -44,16 +54,42 @@ public abstract class FishingHookMixin {
         return original || fluidstate.getFluidType() == FluidRegister.LANTERN_BERRY_JUICE_TYPE.get();
     }
 
-    // 5: 拦截战利品表获取 (预留，如果你需要果汁专属战利品在这里修改)
+    // 5: 拦截战利品表获取
     @ModifyExpressionValue(
             method = "retrieve",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/ReloadableServerRegistries$Holder;getLootTable(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/world/level/storage/loot/LootTable;")
     )
-    private LootTable thrive$changeJuiceLootTable(LootTable original, @Local ResourceKey<LootTable> key) {
+    private LootTable thrive$changeJuiceLootTable(LootTable original) {
         FishingHook hook = (FishingHook) (Object) this;
-        if (hook.level().getFluidState(hook.blockPosition()).getFluidType() == FluidRegister.LANTERN_BERRY_JUICE_TYPE.get()) {
-            // 如果需要替换战利品表，在这里 return 你的 lootTable
+        ServerLevel serverLevel = (ServerLevel) hook.level();
+
+        // 1. 优先找 13x13x13 范围内最近的 FishingArea
+        AABB area = AABB.ofSize(hook.position(), 13.0, 13.0, 13.0);
+        FishingArea nearestArea = serverLevel.getEntitiesOfClass(FishingArea.class, area)
+                .stream()
+                .min(Comparator.comparingDouble(a -> a.distanceToSqr(hook)))
+                .orElse(null);
+
+        if (nearestArea != null && nearestArea.lootTable != null) {
+            return serverLevel.getServer().reloadableRegistries().getLootTable(nearestArea.lootTable);
         }
+
+        // 2. 其次根据流体类型动态获取
+        FluidState fluidState = serverLevel.getFluidState(hook.blockPosition());
+
+        if (!fluidState.isEmpty() && fluidState.getFluidType() != NeoForgeMod.WATER_TYPE.value()) {
+            ResourceLocation fluidId = NeoForgeRegistries.FLUID_TYPES.getKey(fluidState.getFluidType());
+
+            if (fluidId != null) {
+                ResourceKey<LootTable> customLootTable = ResourceKey.create(
+                        Registries.LOOT_TABLE,
+                        ResourceLocation.fromNamespaceAndPath(fluidId.getNamespace(), "fishing/" + fluidId.getPath())
+                );
+                return serverLevel.getServer().reloadableRegistries().getLootTable(customLootTable);
+            }
+        }
+
+        // 3. 原版默认
         return original;
     }
 

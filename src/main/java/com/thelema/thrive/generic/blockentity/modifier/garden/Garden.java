@@ -1,9 +1,9 @@
 package com.thelema.thrive.generic.blockentity.modifier.garden;
 
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
-import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
+import com.thelema.thrive.generic.blockentity.modifier.BiomeTypeChanger;
+import com.thelema.thrive.generic.blockentity.modifier.PhasedModifier;
 import com.thelema.thrive.generic.blockentity.modifier.Ring;
-import com.thelema.thrive.generic.blockentity.modifier.Succession;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -13,49 +13,49 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
-public class Garden implements BiomeModifier {
+public class Garden extends PhasedModifier {
 
-    private static final Succession TO_GARDEN = new Succession(null, GardenHelper.TARGET);
+    private static final BiomeTypeChanger TO_GARDEN =
+            new BiomeTypeChanger(null, GardenHelper.TARGET);
 
-    @Override
-    public boolean canUse(ServerLevel level, BiomeCoreBlockEntity be) {
-        return level.getBiome(be.getBlockPos()).is(GardenHelper.TARGET);
+    public Garden() {
+        addPos(Ring.TICK_20, Garden::prepare);           // PREPARE：clear + surface
+        addPos(Ring.TICK_20, Garden::garden);            // GARDEN
+        addPos(Ring.TICK_20, Garden::boneMeal);          // BONE_MEAL
+        addBS(Ring.TICK_20, TO_GARDEN);                  // REWRITE
+        addFinish(GardenHelper.TREE_GARDEN);             // DONE
     }
 
     @Override
-    public boolean tick(ServerLevel level, BiomeCoreBlockEntity be) {
-        int phase = getPhase(be);
-        if (phase >= GardenHelper.PHASE_DONE) {
-            replaceStructure(level, be, GardenHelper.TREE_GARDEN);
-            return true;
-        }
+    public boolean canUse(BiomeCoreBlockEntity be) {
+        return be.getLevel().getBiome(be.getBlockPos()).is(GardenHelper.TARGET);
+    }
 
-        if (phase == GardenHelper.PHASE_REWRITE) {
-            boolean done = forBS(be, Ring.DEFAULT, TO_GARDEN);
-            if (done) nextPhase(be);
-            return false;
-        }
+    // ── 三个阶段包装：跳过已是 garden 的地区，处理非花园（扩张） ──
 
-        boolean done = forPos(be, Ring.DEFAULT, (b, p) -> {
-            if (level.getBiome(p).is(GardenHelper.TARGET)) return;  // B 方案：入口判
-            switch (phase) {
-                case GardenHelper.PHASE_PREPARE -> {
-                    GardenHelper.clear(level, p);
-                    surface(level, p);
-                }
-                case GardenHelper.PHASE_GARDEN -> GardenHelper.garden(level, be, p);
-                case GardenHelper.PHASE_BONE_MEAL -> GardenHelper.boneMeal(level, be, p);
-            }
-        });
-        if (done) nextPhase(be);
-        return false;
+    private static void prepare(BiomeCoreBlockEntity be, BlockPos p) {
+        if (be.getLevel().getBiome(p).is(GardenHelper.TARGET)) return;
+        GardenHelper.clear(be, p);
+        surface(be, p);
+    }
+
+    private static void garden(BiomeCoreBlockEntity be, BlockPos p) {
+        if (be.getLevel().getBiome(p).is(GardenHelper.TARGET)) return;
+        GardenHelper.garden(be, p);
+    }
+
+    private static void boneMeal(BiomeCoreBlockEntity be, BlockPos p) {
+        if (be.getLevel().getBiome(p).is(GardenHelper.TARGET)) return;
+        GardenHelper.boneMeal(be, p);
     }
 
     // ───── 地表改造 ─────
 
-    void surface(ServerLevel level, BlockPos p) {
+    static void surface(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         BlockState s = level.getBlockState(p);
         if (s.isAir() || !s.getFluidState().isEmpty()) return;
         if (!isNaturalTerrain(s)) return;

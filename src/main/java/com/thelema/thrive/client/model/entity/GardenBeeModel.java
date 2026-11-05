@@ -2,7 +2,7 @@ package com.thelema.thrive.client.model.entity;
 
 import com.google.common.collect.ImmutableList;
 import com.thelema.thrive.ThriveMod;
-import com.thelema.thrive.generic.entity.GardenBee;
+import com.thelema.thrive.generic.entity.mob.GardenBee;
 import net.minecraft.client.model.AgeableListModel;
 import net.minecraft.client.model.ModelUtils;
 import net.minecraft.client.model.geom.ModelLayerLocation;

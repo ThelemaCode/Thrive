@@ -2,12 +2,12 @@ package com.thelema.thrive.generic.blockentity.modifier.sunberry;
 
 import com.thelema.thrive.generic.block.SunBerry;
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
-import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
+import com.thelema.thrive.generic.blockentity.modifier.BiomeTypeChanger;
+import com.thelema.thrive.generic.blockentity.modifier.PhasedModifier;
 import com.thelema.thrive.generic.blockentity.modifier.Ring;
-import com.thelema.thrive.generic.blockentity.modifier.Succession;
-import com.thelema.thrive.register.constant.BiomeConstant;
 import com.thelema.thrive.register.BlockRegister;
 import com.thelema.thrive.register.FluidRegister;
+import com.thelema.thrive.register.constant.BiomeConstant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -27,17 +27,7 @@ import java.util.Map;
 
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
 
-public class MossToSunBerry implements BiomeModifier {
-
-    static final int TICKS_PER_RING = 20;
-    static final int MAX_RING = 64;
-    static final int PHASE_REWRITE = 0;
-    static final int PHASE_CLEAR = 1;
-    static final int PHASE_SURFACE = 2;
-    static final int PHASE_LAKE_DIG = 3;
-    static final int PHASE_LAKE_FILL = 4;
-    static final int PHASE_PLANT = 5;
-    static final int PHASE_DONE = 6;
+public class MossToSunBerry extends PhasedModifier {
 
     static final int TREE_FREE_RADIUS = 7;
 
@@ -57,36 +47,22 @@ public class MossToSunBerry implements BiomeModifier {
     /** 湖列 → 挖洞前的 topY。phase 3 写、phase 4 读。 */
     private final Map<Long, Integer> lakeTop = new HashMap<>();
 
-    private static final Succession MOSS_TO_SUN_BERRY = new Succession(SOURCE, TARGET);
+    private static final BiomeTypeChanger MOSS_TO_SUN_BERRY =
+            new BiomeTypeChanger(SOURCE, TARGET);
 
-    @Override
-    public boolean canUse(ServerLevel level, BiomeCoreBlockEntity be) {
-        return level.getBiome(be.getBlockPos()).is(SOURCE);
+    public MossToSunBerry() {
+        addBS(Ring.TICK_20, MOSS_TO_SUN_BERRY);             // REWRITE
+        addPos(Ring.TICK_20, MossToSunBerry::clear);        // CLEAR
+        addPos(Ring.TICK_20, MossToSunBerry::surface);      // SURFACE
+        addPos(Ring.TICK_20, this::lakeDig);                // LAKE_DIG
+        addPos(Ring.TICK_20, this::lakeFill);               // LAKE_FILL
+        addPos(Ring.TICK_20, this::plant);                  // PLANT
+        addFinish(TREE_SUNBERRY);                           // DONE
     }
 
     @Override
-    public boolean tick(ServerLevel level, BiomeCoreBlockEntity be) {
-        int phase = getPhase(be);
-        if (phase >= PHASE_DONE) {
-            replaceStructure(level, be, TREE_SUNBERRY);
-            return true;
-        }
-        if (phase == PHASE_REWRITE) {
-            boolean done = forBS(be, Ring.DEFAULT, MOSS_TO_SUN_BERRY);
-            if (done) nextPhase(be);
-            return false;
-        }
-        boolean done = forPos(be, Ring.DEFAULT, (b, p) -> {
-            switch (phase) {
-                case PHASE_CLEAR -> clear(level, p);
-                case PHASE_SURFACE -> surface(level, p);
-                case PHASE_LAKE_DIG -> lakeDig(level, be, p);
-                case PHASE_LAKE_FILL -> lakeFill(level, be, p);
-                case PHASE_PLANT -> plant(level, be, p);
-            }
-        });
-        if (done) nextPhase(be);
-        return false;
+    public boolean canUse(BiomeCoreBlockEntity be) {
+        return be.getLevel().getBiome(be.getBlockPos()).is(SOURCE);
     }
 
     static Holder<Biome> target(ServerLevel level) {
@@ -99,7 +75,9 @@ public class MossToSunBerry implements BiomeModifier {
     }
 
     // ─── 阶段 1：清理 ───
-    void clear(ServerLevel level, BlockPos p) {
+
+    static void clear(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         BlockState s = level.getBlockState(p);
         if (s.isAir()) return;
         if (!isMossOrSunberry(level, p)) return;
@@ -124,7 +102,9 @@ public class MossToSunBerry implements BiomeModifier {
     }
 
     // ─── 阶段 2：地表 ───
-    void surface(ServerLevel level, BlockPos p) {
+
+    static void surface(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         if (!isMossOrSunberry(level, p)) return;
         BlockState s = level.getBlockState(p);
 
@@ -151,12 +131,14 @@ public class MossToSunBerry implements BiomeModifier {
     }
 
     // ─── 阶段 3：挖湖 ───
-    void lakeDig(ServerLevel level, BiomeCoreBlockEntity be, BlockPos p) {
+
+    void lakeDig(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         if (withinFreeRadius(be, p)) return;
         if (!isLakePos(p)) return;
         if (!isMossOrSunberry(level, p)) return;
         long col = ((long) p.getX() << 32) | (p.getZ() & 0xFFFFFFFFL);
-        if (lakeTop.containsKey(col)) return;  // 该列已挖
+        if (lakeTop.containsKey(col)) return;
         int topY = level.getHeightmapPos(Heightmap.Types.OCEAN_FLOOR, p).getY();
         lakeTop.put(col, topY);
         for (int y = topY - 1; y >= topY - LAKE_DEPTH; y--) {
@@ -167,13 +149,15 @@ public class MossToSunBerry implements BiomeModifier {
     }
 
     // ─── 阶段 4：补壁 + 灌汁 ───
-    void lakeFill(ServerLevel level, BiomeCoreBlockEntity be, BlockPos p) {
+
+    void lakeFill(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         if (withinFreeRadius(be, p)) return;
         if (!isLakePos(p)) return;
         long col = ((long) p.getX() << 32) | (p.getZ() & 0xFFFFFFFFL);
         Integer topY = lakeTop.get(col);
         if (topY == null) return;
-        if (p.getY() != topY - 1) return;  // 每列只在锚点 y 触发一次
+        if (p.getY() != topY - 1) return;
 
         BlockState peel = BlockRegister.LANTERN_BERRY_PEEL.get().defaultBlockState();
         BlockState juice = FluidRegister.LANTERN_BERRY_JUICE_STILL.get()
@@ -205,7 +189,9 @@ public class MossToSunBerry implements BiomeModifier {
     }
 
     // ─── 阶段 5：植被 ───
-    void plant(ServerLevel level, BiomeCoreBlockEntity be, BlockPos p) {
+
+    void plant(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         if (withinFreeRadius(be, p)) return;
         if (!isMossOrSunberry(level, p)) return;
         BlockState s = level.getBlockState(p);
@@ -229,6 +215,7 @@ public class MossToSunBerry implements BiomeModifier {
     }
 
     // ─── 公共 ───
+
     static boolean isLakePos(BlockPos p) {
         int lx = Math.floorMod(p.getX(), LAKE_TILE) - LAKE_TILE / 2;
         int lz = Math.floorMod(p.getZ(), LAKE_TILE) - LAKE_TILE / 2;

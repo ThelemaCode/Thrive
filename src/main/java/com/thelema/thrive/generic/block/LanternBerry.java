@@ -1,6 +1,6 @@
 package com.thelema.thrive.generic.block;
 
-import com.thelema.thrive.generic.entity.PrimedLanternBerry;
+import com.thelema.thrive.generic.entity.misc.PrimedLanternBerry;
 import com.thelema.thrive.register.BlockRegister;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;

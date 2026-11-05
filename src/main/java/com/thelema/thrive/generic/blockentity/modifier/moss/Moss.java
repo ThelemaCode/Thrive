@@ -1,9 +1,9 @@
 package com.thelema.thrive.generic.blockentity.modifier.moss;
 
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
-import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
+import com.thelema.thrive.generic.blockentity.modifier.BiomeTypeChanger;
+import com.thelema.thrive.generic.blockentity.modifier.PhasedModifier;
 import com.thelema.thrive.generic.blockentity.modifier.Ring;
-import com.thelema.thrive.generic.blockentity.modifier.Succession;
 import com.thelema.thrive.register.BlockRegister;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -11,63 +11,42 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
 /**
- * 任意群系 → Moss。与 Garden 定位一致：从 Moss 群系出发向外扩散，
- * 不破坏已有 Moss 地形，仅影响范围内的非 Moss 区域。
+ * 任意群系 → Moss 扩张。
+ * <p>
+ * BE 在 moss 群系启动，Ring 范围内除已有 moss 区外全部改造。
+ * REWRITE 在最后——前面阶段跑时群系还是原样，靠 {@link MossHelper#skipMoss} 跳过已有 moss。
  */
-public class Moss implements BiomeModifier {
+public class Moss extends PhasedModifier {
 
-    static final int PHASE_PREPARE = 0;
-    static final int PHASE_LAKE = 1;
-    static final int PHASE_DECO = 2;
-    static final int PHASE_REWRITE = 3;
+    private static final BiomeTypeChanger ANY_TO_MOSS =
+            new BiomeTypeChanger(null, MossHelper.TARGET);
 
-    private static final Succession ANY_TO_MOSS = new Succession(null, MossHelper.TARGET);
-
-    @Override
-    public boolean canUse(ServerLevel level, BiomeCoreBlockEntity be) {
-        return level.getBiome(be.getBlockPos()).is(MossHelper.TARGET);
+    public Moss() {
+        addPos(Ring.TICK_20, MossHelper.skipMoss(Moss::prepare));      // PREPARE：清植被 + 改地表
+        addPos(Ring.TICK_10, MossHelper.skipMoss(MossHelper::lake));   // LAKE
+        addPos(Ring.TICK_20, MossHelper.skipMoss(MossHelper::deco));   // DECO
+        addBS (Ring.TICK_20, ANY_TO_MOSS);                             // REWRITE
+        addFinish(MossHelper.TREE_MOSS);                               // DONE
     }
 
     @Override
-    public boolean tick(ServerLevel level, BiomeCoreBlockEntity be) {
-        switch (getPhase(be)) {
-            case PHASE_PREPARE -> {
-                if (forPos(be, Ring.DEFAULT, (b, p) -> {
-                    clear(level, p);
-                    surface(level, p);
-                })) nextPhase(be);
-                return false;
-            }
-            case PHASE_LAKE -> {
-                if (forPos(be, Ring.FAST_I, MossHelper.lake(t -> true))) nextPhase(be);
-                return false;
-            }
-            case PHASE_DECO -> {
-                if (forPos(be, Ring.DEFAULT, (b, p) -> {
-                    if (level.getBiome(p).is(MossHelper.TARGET)) return;
-                    MossHelper.deco(level, p);
-                })) nextPhase(be);
-                return false;
-            }
-            case PHASE_REWRITE -> {
-                if (forBS(be, Ring.DEFAULT, ANY_TO_MOSS)) nextPhase(be);
-                return false;
-            }
-            default -> {
-                replaceStructure(level, be, MossHelper.TREE_MOSS);
-                return true;
-            }
-        }
+    public boolean canUse(BiomeCoreBlockEntity be) {
+        return be.getLevel().getBiome(be.getBlockPos()).is(MossHelper.TARGET);
     }
 
-    /**
-     * 清树、花草、蕨、藤蔓。跳过原 moss 区域。
-     */
-    static void clear(ServerLevel level, BlockPos p) {
-        if (level.getBiome(p).is(MossHelper.TARGET)) return;
+    private static void prepare(BiomeCoreBlockEntity be, BlockPos p) {
+        clear(be, p);
+        surface(be, p);
+    }
+
+    // ───── 清理（清树、花草、蕨、藤蔓） ─────
+
+    static void clear(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         BlockState s = level.getBlockState(p);
         if (s.isAir() || !s.getFluidState().isEmpty()) return;
         boolean plant = s.is(BlockTags.REPLACEABLE_BY_TREES)
@@ -81,11 +60,10 @@ public class Moss implements BiomeModifier {
         markDirty(level, p);
     }
 
-    /**
-     * 上方是空气的自然地形 → MOSS_BLOCK。跳过原 moss 区域。
-     */
-    static void surface(ServerLevel level, BlockPos p) {
-        if (level.getBiome(p).is(MossHelper.TARGET)) return;
+    // ───── 地表（上方空气的自然地形 → 苔藓块） ─────
+
+    static void surface(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         BlockState s = level.getBlockState(p);
         if (s.isAir() || !s.getFluidState().isEmpty()) return;
         if (!MossHelper.isNaturalTerrain(s)) return;

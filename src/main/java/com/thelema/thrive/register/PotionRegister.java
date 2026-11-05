@@ -1,13 +1,12 @@
 package com.thelema.thrive.register;
 
 import com.thelema.thrive.ThriveMod;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.Potions;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -24,7 +23,8 @@ public class PotionRegister {
 
     // ============ 缓降 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_SLOW_FALLING =
-            longP("super_long_slow_falling", "slow_falling", MobEffects.SLOW_FALLING, 4800);
+            POTION.register("super_long_slow_falling", () -> new Potion("slow_falling",
+                    new MobEffectInstance(MobEffects.SLOW_FALLING, 19200)));
 
     // ============ 牛奶 ============
     public static final DeferredHolder<Potion, Potion> MILK =
@@ -37,111 +37,134 @@ public class PotionRegister {
             POTION.register("super_long_milk", () -> new Potion("milk",
                     new MobEffectInstance(EffectRegister.MILK, 38400)));// 32min
 
-
     // ============ 迅捷 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_SWIFTNESS =
-            longP("super_long_swiftness", "swiftness", MobEffects.MOVEMENT_SPEED, 9600);
+            POTION.register("super_long_swiftness", () -> new Potion("swiftness",
+                    new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 38400)));
     public static final DeferredHolder<Potion, Potion> SUPER_STRONG_SWIFTNESS =
-            strongP("super_strong_swiftness", "swiftness", MobEffects.MOVEMENT_SPEED, 1800, 1);
+            POTION.register("super_strong_swiftness", () -> new Potion("swiftness",
+                    new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 1800, 2)));
 
     // ============ 力量 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_STRENGTH =
-            longP("super_long_strength", "strength", MobEffects.DAMAGE_BOOST, 9600);
+            POTION.register("super_long_strength", () -> new Potion("strength",
+                    new MobEffectInstance(MobEffects.DAMAGE_BOOST, 38400)));
     public static final DeferredHolder<Potion, Potion> SUPER_STRONG_STRENGTH =
-            strongP("super_strong_strength", "strength", MobEffects.DAMAGE_BOOST, 1800, 1);
-
+            POTION.register("super_strong_strength", () -> new Potion("strength",
+                    new MobEffectInstance(MobEffects.DAMAGE_BOOST, 1800, 2)));
 
     // ============ 抗火 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_FIRE_RESISTANCE =
-            longP("super_long_fire_resistance", "fire_resistance", MobEffects.FIRE_RESISTANCE, 9600);
+            POTION.register("super_long_fire_resistance", () -> new Potion("fire_resistance",
+                    new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 38400)));
 
     // ============ 跳跃 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_LEAPING =
-            longP("super_long_leaping", "leaping", MobEffects.JUMP, 9600);
+            POTION.register("super_long_leaping", () -> new Potion("leaping",
+                    new MobEffectInstance(MobEffects.JUMP, 38400)));
     public static final DeferredHolder<Potion, Potion> SUPER_STRONG_LEAPING =
-            strongP("super_strong_leaping", "leaping", MobEffects.JUMP, 1800, 1);
+            POTION.register("super_strong_leaping", () -> new Potion("leaping",
+                    new MobEffectInstance(MobEffects.JUMP, 1800, 2)));
 
     // ============ 恢复 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_REGENERATION =
-            longP("super_long_regeneration", "regeneration", MobEffects.REGENERATION, 1800);
+            POTION.register("super_long_regeneration", () -> new Potion("regeneration",
+                    new MobEffectInstance(MobEffects.REGENERATION, 7200)));
     public static final DeferredHolder<Potion, Potion> SUPER_STRONG_REGENERATION =
-            strongP("super_strong_regeneration", "regeneration", MobEffects.REGENERATION, 450, 1);
+            POTION.register("super_strong_regeneration", () -> new Potion("regeneration",
+                    new MobEffectInstance(MobEffects.REGENERATION, 450, 2)));
 
     // ============ 隐身 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_INVISIBILITY =
-            longP("super_long_invisibility", "invisibility", MobEffects.INVISIBILITY, 9600);
+            POTION.register("super_long_invisibility", () -> new Potion("invisibility",
+                    new MobEffectInstance(MobEffects.INVISIBILITY, 38400)));
 
     // ============ 虚弱 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_WEAKNESS =
-            longP("super_long_weakness", "weakness", MobEffects.WEAKNESS, 4800);
+            POTION.register("super_long_weakness", () -> new Potion("weakness",
+                    new MobEffectInstance(MobEffects.WEAKNESS, 19200)));
 
     // ============ 水肺 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_WATER_BREATHING =
-            longP("super_long_water_breathing", "water_breathing", MobEffects.WATER_BREATHING, 9600);
+            POTION.register("super_long_water_breathing", () -> new Potion("water_breathing",
+                    new MobEffectInstance(MobEffects.WATER_BREATHING, 38400)));
 
     // ============ 剧毒 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_POISON =
-            longP("super_long_poison", "poison", MobEffects.POISON, 1800);
+            POTION.register("super_long_poison", () -> new Potion("poison",
+                    new MobEffectInstance(MobEffects.POISON, 7200)));
     public static final DeferredHolder<Potion, Potion> SUPER_STRONG_POISON =
-            strongP("super_strong_poison", "poison", MobEffects.POISON, 432, 1);
+            POTION.register("super_strong_poison", () -> new Potion("poison",
+                    new MobEffectInstance(MobEffects.POISON, 432, 2)));
 
     // ============ 缓慢 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_SLOWNESS =
-            longP("super_long_slowness", "slowness", MobEffects.MOVEMENT_SLOWDOWN, 4800);
+            POTION.register("super_long_slowness", () -> new Potion("slowness",
+                    new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 19200)));
     public static final DeferredHolder<Potion, Potion> SUPER_STRONG_SLOWNESS =
-            strongP("super_strong_slowness", "slowness", MobEffects.MOVEMENT_SLOWDOWN, 400, 2);
+            POTION.register("super_strong_slowness", () -> new Potion("slowness",
+                    new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 3)));
 
     // ============ 夜视 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_NIGHT_VISION =
-            longP("super_long_night_vision", "night_vision", MobEffects.NIGHT_VISION, 9600);
+            POTION.register("super_long_night_vision", () -> new Potion("night_vision",
+                    new MobEffectInstance(MobEffects.NIGHT_VISION, 38400)));
 
     // ============ 织网 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_WEAVING =
-            longP("super_long_weaving", "weaving", MobEffects.WEAVING, 3600);
+            POTION.register("super_long_weaving", () -> new Potion("weaving",
+                    new MobEffectInstance(MobEffects.WEAVING, 14400)));
 
     // ============ 渗浆 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_OOZING =
-            longP("super_long_oozing", "oozing", MobEffects.OOZING, 3600);
+            POTION.register("super_long_oozing", () -> new Potion("oozing",
+                    new MobEffectInstance(MobEffects.OOZING, 14400)));
 
     // ============ 虫蚀 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_INFESTED =
-            longP("super_long_infested", "infested", MobEffects.INFESTED, 3600);
+            POTION.register("super_long_infested", () -> new Potion("infested",
+                    new MobEffectInstance(MobEffects.INFESTED, 14400)));
 
     // ============ 蓄风 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_WIND_CHARGED =
-            longP("super_long_wind_charged", "wind_charged", MobEffects.WIND_CHARGED, 3600);
+            POTION.register("super_long_wind_charged", () -> new Potion("wind_charged",
+                    new MobEffectInstance(MobEffects.WIND_CHARGED, 14400)));
 
     // ============ 凋零 ============
     public static final DeferredHolder<Potion, Potion> WITHER =
             POTION.register("wither", () -> new Potion("wither",
-                    new MobEffectInstance(MobEffects.WITHER, 900)));
+                    new MobEffectInstance(MobEffects.WITHER, 900))); // 45s
     public static final DeferredHolder<Potion, Potion> LONG_WITHER =
             POTION.register("long_wither", () -> new Potion("wither",
-                    new MobEffectInstance(MobEffects.WITHER, 2400)));
+                    new MobEffectInstance(MobEffects.WITHER, 1800))); // 90s
     public static final DeferredHolder<Potion, Potion> STRONG_WITHER =
             POTION.register("strong_wither", () -> new Potion("wither",
-                    new MobEffectInstance(MobEffects.WITHER, 450, 1)));
+                    new MobEffectInstance(MobEffects.WITHER, 450, 1))); // 22s II
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_WITHER =
-            longP("super_long_wither", "wither", MobEffects.WITHER, 2400);
+            POTION.register("super_long_wither", () -> new Potion("wither", // 360s 6min
+                    new MobEffectInstance(MobEffects.WITHER, 7200)));
     public static final DeferredHolder<Potion, Potion> SUPER_STRONG_WITHER =
-            strongP("super_strong_wither", "wither", MobEffects.WITHER, 450, 1);
+            POTION.register("super_strong_wither", () -> new Potion("wither",
+                    new MobEffectInstance(MobEffects.WITHER, 450, 2))); // 22s III
 
     // ============ 治疗（瞬发） ============
     public static final DeferredHolder<Potion, Potion> SUPER_STRONG_HEALING =
-            strongP("super_strong_healing", "healing", MobEffects.HEAL, 1, 1);
+            POTION.register("super_strong_healing", () -> new Potion("healing",
+                    new MobEffectInstance(MobEffects.HEAL, 1, 2)));
 
     // ============ 伤害（瞬发） ============
     public static final DeferredHolder<Potion, Potion> SUPER_STRONG_HARMING =
-            strongP("super_strong_harming", "harming", MobEffects.HARM, 1, 1);
+            POTION.register("super_strong_harming", () -> new Potion("harming",
+                    new MobEffectInstance(MobEffects.HARM, 1, 2)));
 
     // ============ 神龟 ============
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_TURTLE_MASTER =
             POTION.register("super_long_turtle_master", () -> new Potion("turtle_master",
-                    new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 800 * 4, 3),
-                    new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 800 * 4, 2)));
+                    new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 3200, 3),
+                    new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 3200, 2)));
     public static final DeferredHolder<Potion, Potion> SUPER_STRONG_TURTLE_MASTER =
             POTION.register("super_strong_turtle_master", () -> new Potion("turtle_master",
-                    new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 6),
+                    new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 3),
                     new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 400, 4)));
 
     // ============ 漂浮 ============
@@ -152,23 +175,20 @@ public class PotionRegister {
             POTION.register("long_levitation", () -> new Potion("levitation",
                     new MobEffectInstance(MobEffects.LEVITATION, 4800)));
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_LEVITATION =
-            longP("super_long_levitation", "levitation", MobEffects.LEVITATION, 4800);
+            POTION.register("super_long_levitation", () -> new Potion("levitation",
+                    new MobEffectInstance(MobEffects.LEVITATION, 19200)));
 
-    // ============ 辅助 ============
+    // ============ 苔藓 ============
+    public static final DeferredHolder<Potion, Potion> MOSS =
+            POTION.register("moss", () -> new Potion("moss",
+                    new MobEffectInstance(EffectRegister.MOSS, 900))); // 45s
+    public static final DeferredHolder<Potion, Potion> LONG_MOSS =
+            POTION.register("long_moss", () -> new Potion("moss",
+                    new MobEffectInstance(EffectRegister.MOSS, 1800))); // 90s
+    public static final DeferredHolder<Potion, Potion> SUPER_LONG_MOSS =
+            POTION.register("super_long_moss", () -> new Potion("moss",
+                    new MobEffectInstance(EffectRegister.MOSS, 7200))); // 360s
 
-    private static DeferredHolder<Potion, Potion> longP(String name, String base,
-                                                        Holder<MobEffect> effect,
-                                                        int srcDur) {
-        return POTION.register(name, () -> new Potion(base,
-                new MobEffectInstance(effect, srcDur * 4)));
-    }
-
-    private static DeferredHolder<Potion, Potion> strongP(String name, String base,
-                                                          Holder<MobEffect> effect,
-                                                          int srcDur, int srcAmp) {
-        return POTION.register(name, () -> new Potion(base,
-                new MobEffectInstance(effect, srcDur, srcAmp + 1)));
-    }
 
     public static void register(IEventBus bus) {
         POTION.register(bus);
@@ -178,8 +198,30 @@ public class PotionRegister {
 
     @SubscribeEvent
     public static void onRegisterBrewingRecipes(RegisterBrewingRecipesEvent event) {
-        var b = event.getBuilder();
+        PotionBrewing.Builder b = event.getBuilder();
 
+        // 白郁金香 → 牛奶
+        b.addMix(Potions.AWKWARD, Items.WHITE_TULIP, MILK);
+        b.addMix(MILK, Items.REDSTONE, LONG_MILK);
+
+        // 凋灵玫瑰 → 凋零
+        b.addMix(Potions.AWKWARD, Items.WITHER_ROSE, WITHER);
+        b.addMix(WITHER, Items.REDSTONE, LONG_WITHER);
+        b.addMix(WITHER, Items.GLOWSTONE_DUST, STRONG_WITHER);
+
+        // 紫颂花 → 漂浮
+        b.addMix(Potions.AWKWARD, Items.CHORUS_FLOWER, LEVITATION);
+        b.addMix(LEVITATION, Items.REDSTONE, LONG_LEVITATION);
+
+        // 苔藓鳕鱼 → 苔藓
+        b.addMix(Potions.AWKWARD, ItemRegister.MOSS_COD.get(), MOSS);
+        b.addMix(MOSS, Items.REDSTONE, LONG_MOSS);
+
+        // 蜂蜜升级配方
+        honeyRecipe(b);
+    }
+
+    private static void honeyRecipe(PotionBrewing.Builder b) {
         // 1 蒲公英 → 缓降
         b.addMix(Potions.LONG_SLOW_FALLING, ItemRegister.DANDELION_HONEY.get(), SUPER_LONG_SLOW_FALLING);
 
@@ -203,8 +245,6 @@ public class PotionRegister {
         b.addMix(Potions.LONG_FIRE_RESISTANCE, ItemRegister.ORANGE_TULIP_HONEY.get(), SUPER_LONG_FIRE_RESISTANCE);
 
         // 8 白郁金香 → 牛奶
-        b.addMix(Potions.AWKWARD, ItemRegister.WHITE_TULIP_HONEY.get(), PotionRegister.MILK);
-        b.addMix(MILK, Items.REDSTONE, LONG_MILK);
         b.addMix(PotionRegister.LONG_MILK, ItemRegister.WHITE_TULIP_HONEY.get(), SUPER_LONG_MILK);
 
         // 9 粉郁金香 → 恢复
@@ -223,21 +263,11 @@ public class PotionRegister {
         b.addMix(Potions.STRONG_POISON, ItemRegister.LILY_OF_THE_VALLEY_HONEY.get(), SUPER_STRONG_POISON);
 
         // 13 凋灵玫瑰 → 凋零
-        b.addMix(Potions.AWKWARD, Items.WITHER_ROSE, WITHER);
-        b.addMix(WITHER, Items.REDSTONE, LONG_WITHER);
-        b.addMix(WITHER, Items.GLOWSTONE_DUST, STRONG_WITHER);
         b.addMix(LONG_WITHER,   ItemRegister.WITHER_ROSE_HONEY.get(), SUPER_LONG_WITHER);
         b.addMix(STRONG_WITHER, ItemRegister.WITHER_ROSE_HONEY.get(), SUPER_STRONG_WITHER);
 
-        // 14 火把花 —— 空
-
-        // 15 向日葵 —— 空
-
         // 16 丁香 → 蓄风
         b.addMix(Potions.WIND_CHARGED, ItemRegister.LILAC_HONEY.get(), SUPER_LONG_WIND_CHARGED);
-
-        // 17 牡丹 —— 无
-
 
         // 18 玫瑰丛 → 伤害
         b.addMix(Potions.STRONG_HARMING, ItemRegister.ROSE_BUSH_HONEY.get(), SUPER_STRONG_HARMING);
@@ -248,27 +278,25 @@ public class PotionRegister {
         // 20 盛开杜鹃叶 → 虫蚀
         b.addMix(Potions.INFESTED, ItemRegister.FLOWERING_AZALEA_LEAVES_HONEY.get(), SUPER_LONG_INFESTED);
 
-        // 21 盛开杜鹃 —— 跳跃
+        // 21 盛开杜鹃 → 跳跃，苔藓
         b.addMix(Potions.LONG_LEAPING, ItemRegister.FLOWERING_AZALEA_HONEY.get(), SUPER_LONG_LEAPING);
         b.addMix(Potions.STRONG_LEAPING, ItemRegister.FLOWERING_AZALEA_HONEY.get(), SUPER_STRONG_LEAPING);
+        b.addMix(LONG_MOSS, ItemRegister.FLOWERING_AZALEA_HONEY.get(), SUPER_LONG_MOSS);
 
         // 22 红树胎生苗 → 神龟
         b.addMix(Potions.LONG_TURTLE_MASTER, ItemRegister.MANGROVE_PROPAGULE_HONEY.get(), SUPER_LONG_TURTLE_MASTER);
         b.addMix(Potions.STRONG_TURTLE_MASTER, ItemRegister.MANGROVE_PROPAGULE_HONEY.get(), SUPER_STRONG_TURTLE_MASTER);
-
-        // 23 樱花树叶 —— 空
 
         // 24 粉红花瓣 → 缓慢
         b.addMix(Potions.LONG_SLOWNESS, ItemRegister.PINK_PETALS_HONEY.get(), SUPER_LONG_SLOWNESS);
         b.addMix(Potions.STRONG_SLOWNESS, ItemRegister.PINK_PETALS_HONEY.get(), SUPER_STRONG_SLOWNESS);
 
         // 25 紫颂花 → 漂浮
-        b.addMix(Potions.AWKWARD, Items.CHORUS_FLOWER, LEVITATION);
-        b.addMix(LEVITATION, Items.REDSTONE, LONG_LEVITATION);
         b.addMix(LONG_LEVITATION, ItemRegister.CHORUS_FLOWER_HONEY.get(), SUPER_LONG_LEVITATION);
 
         // 26 孢子花 → 夜视
         b.addMix(Potions.LONG_NIGHT_VISION, ItemRegister.SPORE_BLOSSOM_HONEY.get(), SUPER_LONG_NIGHT_VISION);
+
     }
 
 }

@@ -3,7 +3,7 @@ package com.thelema.thrive.client.render.entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.thelema.thrive.client.model.entity.LanternBerryCreeperModel;
-import com.thelema.thrive.generic.entity.LanternBerryCreeper;
+import com.thelema.thrive.generic.entity.mob.LanternBerryCreeper;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

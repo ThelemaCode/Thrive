@@ -6,11 +6,8 @@ import net.minecraft.core.BlockPos;
 public final class Ring implements PosFinder {
 
     /** 默认 1 秒 1 环，4 chunk 半径，为了中心也能正常覆盖，使用 5 chunk半径，区块边界由ring保证了。 */
-    public static final Ring DEFAULT = new Ring(20, 80);
-    public static final Ring FAST_I = new Ring(10, 80);
-    public static final Ring FAST_II = new Ring(5, 80);
-    public static final Ring FAST_III = new Ring(2, 80);
-    public static final Ring FAST_IV = new Ring(1, 80);
+    public static final Ring TICK_20 = new Ring(20, 80);
+    public static final Ring TICK_10 = new Ring(10, 80);
 
     private final int ticksPerRing;
     private final int maxRing;

@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.thelema.thrive.ThriveMod;
-import com.thelema.thrive.generic.entity.BreezeCore;
+import com.thelema.thrive.generic.entity.mob.BreezeCore;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -41,6 +41,14 @@ public class BreezeCoreWindLayer extends GeoRenderLayer<BreezeCore> {
 
         float cy = 1.0F;
 
+        // 按附着状态取色
+        float cr, cg, cb;
+        switch (entity.getFlag()) {
+            case 1 -> { cr = 0.45F; cg = 0.80F; cb = 1.00F; }   // 水蓝
+            case 2 -> { cr = 1.00F; cg = 0.55F; cb = 0.15F; }   // 火焰橙
+            default -> { cr = 1.00F; cg = 1.00F; cb = 1.00F; }  // 原色
+        }
+
         // 外层：边长 5，三轴同向旋转
         float ox = (t * 0.8F) % 360F;
         float oy = (t * 1.5F) % 360F;
@@ -53,7 +61,7 @@ public class BreezeCoreWindLayer extends GeoRenderLayer<BreezeCore> {
         poseStack.mulPose(Axis.ZP.rotationDegrees(oz));
         drawShell(poseStack,
                 bufferSource.getBuffer(RenderType.breezeWind(WIND, (t * 0.02F) % 1.0F, 0F)),
-                2.5F, -2.5F, 2.5F, outX, outZ);
+                2.5F, -2.5F, 2.5F, outX, outZ, cr, cg, cb);
         poseStack.popPose();
 
         // 内层：边长 3，三轴反向 + 更快
@@ -68,63 +76,65 @@ public class BreezeCoreWindLayer extends GeoRenderLayer<BreezeCore> {
         poseStack.mulPose(Axis.ZP.rotationDegrees(iz));
         drawShell(poseStack,
                 bufferSource.getBuffer(RenderType.breezeWind(WIND, (-t * 0.014F + 0.5F) % 1.0F, 0F)),
-                1.5F, -1.5F, 1.5F, inX, inZ);
+                1.5F, -1.5F, 1.5F, inX, inZ, cr, cg, cb);
         poseStack.popPose();
     }
 
     /** 6 面立方体壳，UV 从左上角开始，按 1/8 scale 截取。 */
     private static void drawShell(PoseStack poseStack, VertexConsumer vc,
                                   float half, float yMin, float yMax,
-                                  float offX, float offZ) {
+                                  float offX, float offZ,
+                                  float r, float g, float b) {
         PoseStack.Pose pose = poseStack.last();
 
         // 128×128 纹理，每块 16 像素 → 一块占 1/8 UV
         float scale = 1.0F / 8.0F;
-        float maxU  = (half * 2) * scale;         // 边长对应的 UV 宽度
-        float maxV  = (yMax - yMin) * scale;       // 高度对应的 UV 高度
+        float maxU  = (half * 2) * scale;
+        float maxV  = (yMax - yMin) * scale;
 
-        // +X 面（U 沿 Z，V 沿 Y）
-        vert(pose, vc, half + offX, yMin, -half + offZ, 0,    maxV, 1, 0, 0);
-        vert(pose, vc, half + offX, yMin,  half + offZ, maxU, maxV, 1, 0, 0);
-        vert(pose, vc, half + offX, yMax,  half + offZ, maxU, 0,    1, 0, 0);
-        vert(pose, vc, half + offX, yMax, -half + offZ, 0,    0,    1, 0, 0);
+        // +X 面
+        vert(pose, vc, half + offX, yMin, -half + offZ, 0,    maxV, 1, 0, 0, r, g, b);
+        vert(pose, vc, half + offX, yMin,  half + offZ, maxU, maxV, 1, 0, 0, r, g, b);
+        vert(pose, vc, half + offX, yMax,  half + offZ, maxU, 0,    1, 0, 0, r, g, b);
+        vert(pose, vc, half + offX, yMax, -half + offZ, 0,    0,    1, 0, 0, r, g, b);
 
         // -X 面
-        vert(pose, vc, -half + offX, yMin,  half + offZ, 0,    maxV, -1, 0, 0);
-        vert(pose, vc, -half + offX, yMin, -half + offZ, maxU, maxV, -1, 0, 0);
-        vert(pose, vc, -half + offX, yMax, -half + offZ, maxU, 0,    -1, 0, 0);
-        vert(pose, vc, -half + offX, yMax,  half + offZ, 0,    0,    -1, 0, 0);
+        vert(pose, vc, -half + offX, yMin,  half + offZ, 0,    maxV, -1, 0, 0, r, g, b);
+        vert(pose, vc, -half + offX, yMin, -half + offZ, maxU, maxV, -1, 0, 0, r, g, b);
+        vert(pose, vc, -half + offX, yMax, -half + offZ, maxU, 0,    -1, 0, 0, r, g, b);
+        vert(pose, vc, -half + offX, yMax,  half + offZ, 0,    0,    -1, 0, 0, r, g, b);
 
-        // +Z 面（U 沿 X，V 沿 Y）
-        vert(pose, vc,  half + offX, yMin, half + offZ, maxU, maxV, 0, 0, 1);
-        vert(pose, vc, -half + offX, yMin, half + offZ, 0,    maxV, 0, 0, 1);
-        vert(pose, vc, -half + offX, yMax, half + offZ, 0,    0,    0, 0, 1);
-        vert(pose, vc,  half + offX, yMax, half + offZ, maxU, 0,    0, 0, 1);
+        // +Z 面
+        vert(pose, vc,  half + offX, yMin, half + offZ, maxU, maxV, 0, 0, 1, r, g, b);
+        vert(pose, vc, -half + offX, yMin, half + offZ, 0,    maxV, 0, 0, 1, r, g, b);
+        vert(pose, vc, -half + offX, yMax, half + offZ, 0,    0,    0, 0, 1, r, g, b);
+        vert(pose, vc,  half + offX, yMax, half + offZ, maxU, 0,    0, 0, 1, r, g, b);
 
         // -Z 面
-        vert(pose, vc, -half + offX, yMin, -half + offZ, maxU, maxV, 0, 0, -1);
-        vert(pose, vc,  half + offX, yMin, -half + offZ, 0,    maxV, 0, 0, -1);
-        vert(pose, vc,  half + offX, yMax, -half + offZ, 0,    0,    0, 0, -1);
-        vert(pose, vc, -half + offX, yMax, -half + offZ, maxU, 0,    0, 0, -1);
+        vert(pose, vc, -half + offX, yMin, -half + offZ, maxU, maxV, 0, 0, -1, r, g, b);
+        vert(pose, vc,  half + offX, yMin, -half + offZ, 0,    maxV, 0, 0, -1, r, g, b);
+        vert(pose, vc,  half + offX, yMax, -half + offZ, 0,    0,    0, 0, -1, r, g, b);
+        vert(pose, vc, -half + offX, yMax, -half + offZ, maxU, 0,    0, 0, -1, r, g, b);
 
-        // +Y 顶面（U 沿 X，V 沿 Z）
-        vert(pose, vc,  half + offX, yMax,  half + offZ, 0,     0,     0, 1, 0);
-        vert(pose, vc, -half + offX, yMax,  half + offZ, maxU, 0,     0, 1, 0);
-        vert(pose, vc, -half + offX, yMax, -half + offZ, maxU, maxU, 0, 1, 0);
-        vert(pose, vc,  half + offX, yMax, -half + offZ, 0, maxU, 0, 1, 0);
+        // +Y 顶面
+        vert(pose, vc,  half + offX, yMax,  half + offZ, 0,     0,     0, 1, 0, r, g, b);
+        vert(pose, vc, -half + offX, yMax,  half + offZ, maxU, 0,     0, 1, 0, r, g, b);
+        vert(pose, vc, -half + offX, yMax, -half + offZ, maxU, maxU, 0, 1, 0, r, g, b);
+        vert(pose, vc,  half + offX, yMax, -half + offZ, 0, maxU, 0, 1, 0, r, g, b);
 
         // -Y 底面
-        vert(pose, vc,  half + offX, yMin, -half + offZ, 0, maxU, 0, -1, 0);
-        vert(pose, vc, -half + offX, yMin, -half + offZ, maxU, maxU, 0, -1, 0);
-        vert(pose, vc, -half + offX, yMin,  half + offZ, maxU, 0,     0, -1, 0);
-        vert(pose, vc,  half + offX, yMin,  half + offZ, 0,     0,     0, -1, 0);
+        vert(pose, vc,  half + offX, yMin, -half + offZ, 0, maxU, 0, -1, 0, r, g, b);
+        vert(pose, vc, -half + offX, yMin, -half + offZ, maxU, maxU, 0, -1, 0, r, g, b);
+        vert(pose, vc, -half + offX, yMin,  half + offZ, maxU, 0,     0, -1, 0, r, g, b);
+        vert(pose, vc,  half + offX, yMin,  half + offZ, 0,     0,     0, -1, 0, r, g, b);
     }
 
     private static void vert(PoseStack.Pose pose, VertexConsumer vc,
                              float x, float y, float z, float u, float v,
-                             float nx, float ny, float nz) {
+                             float nx, float ny, float nz,
+                             float r, float g, float b) {
         vc.addVertex(pose, x, y, z)
-                .setColor(1F, 1F, 1F, 1F)
+                .setColor(r, g, b, 1F)
                 .setUv(u, v)
                 .setOverlay(OverlayTexture.NO_OVERLAY)
                 .setLight(0xF000F0)

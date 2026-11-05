@@ -3,7 +3,6 @@ package com.thelema.thrive.generic.blockentity.modifier.garden;
 import com.thelema.thrive.generic.block.GardenBeeNest;
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
 import com.thelema.thrive.generic.blockentity.GardenBeeNestBlockEntity;
-import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
 import com.thelema.thrive.register.BlockRegister;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -39,14 +38,6 @@ final class GardenHelper {
 
     // ───── 环与阶段 ─────
     static final int SAND_DEPTH = 9;
-    static final int TICKS_PER_RING = 20;
-    static final int MAX_RING = 64;
-    static final int RINGS_PER_PHASE = MAX_RING + 1;
-    static final int PHASE_PREPARE = 0;
-    static final int PHASE_GARDEN = 1;
-    static final int PHASE_BONE_MEAL = 2;
-    static final int PHASE_REWRITE = 3;
-    static final int PHASE_DONE = 4;
 
     // ───── 造景参数 ─────
     static final int BONE_MEAL_CHANCE = 18;
@@ -79,7 +70,8 @@ final class GardenHelper {
 
     // ───── 清理 ─────
 
-    static void clear(ServerLevel level, BlockPos p) {
+    static void clear(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         BlockState s = level.getBlockState(p);
         if (s.isAir()) return;
         if (!s.getFluidState().isEmpty()) return;
@@ -94,7 +86,8 @@ final class GardenHelper {
 
     // ───── 造景 ─────
 
-    static void garden(ServerLevel level, BiomeCoreBlockEntity be, BlockPos p) {
+    static void garden(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         BlockPos c = be.getBlockPos();
         int dist = Math.max(Math.abs(p.getX() - c.getX()), Math.abs(p.getZ() - c.getZ()));
         if (dist <= TREE_FREE_RADIUS) return;
@@ -118,7 +111,8 @@ final class GardenHelper {
 
     // ───── 骨粉 ─────
 
-    static void boneMeal(ServerLevel level, BiomeCoreBlockEntity be, BlockPos p) {
+    static void boneMeal(BiomeCoreBlockEntity be, BlockPos p) {
+        ServerLevel level = (ServerLevel) be.getLevel();
         BlockPos c = be.getBlockPos();
         int dist = Math.max(Math.abs(p.getX() - c.getX()), Math.abs(p.getZ() - c.getZ()));
         if (dist <= TREE_FREE_RADIUS) return;
@@ -138,7 +132,7 @@ final class GardenHelper {
             markDirty(level, d);
     }
 
-    // ───── 辅助 ─────
+    // ───── 辅助（签名不变） ─────
 
     static boolean growFancyOak(ServerLevel level, BlockPos pos) {
         return level.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE)

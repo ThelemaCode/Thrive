@@ -12,19 +12,18 @@
   "block.thrive.garden_bee_nest": "Garden Bee Nest",
   "block.thrive.lantern_berry_peel": "Lantern Berry Peel",
   "block.thrive.cloud": "Cloud",
+  "block.thrive.wispy_cloud": "Wispy Cloud",
 
 
   "itemGroup.thrive": "Thrive",
   "item.thrive.lantern_berry_juice_bucket": "Lantern Berry Juice Bucket",
-  "item.thrive.fresh_grass": "Fresh Grass",
-  "item.thrive.fresh_grass_paste": "Fresh Grass Paste",
-  "item.thrive.hunger_snack": "Hunger Snack",
-  "item.thrive.fresh_grass_cake": "Fresh Grass Cake",
-  "item.thrive.biome_twig": "Biome Twig",
   "item.thrive.whistle": "Bee Whistle",
-  "item.thrive.breeze_sword": "Breeze Sword",
+  "item.thrive.rampant_moss": "Rampant Moss",
+  "item.thrive.moss_cod": "Moss Cod",
 
 
+  "item.thrive.mossy_zombie_spawn_egg": "Mossy Zombie Spawn Egg",
+  "item.thrive.lantern_berry_creeper_spawn_egg": "Lantern  Berry Creeper Spawn Egg",
   "item.thrive.garden_bee_spawn_egg": "Garden Bee Spawn Egg",
   "item.thrive.breeze_core_spawn_egg": "Breeze Core Spawn Egg",
   "item.thrive.garden_pillager_spawn_egg": "Garden Pillager Spawn Egg",
@@ -73,11 +72,18 @@
   "item.minecraft.lingering_potion.effect.levitation": "Lingering Potion of Levitation",
   "item.minecraft.tipped_arrow.effect.levitation": "Arrow of Levitation",
 
+  "item.minecraft.potion.effect.moss": "Potion of Moss",
+  "item.minecraft.splash_potion.effect.moss": "Splash Potion of Moss",
+  "item.minecraft.lingering_potion.effect.moss": "Lingering Potion of Moss",
+  "item.minecraft.tipped_arrow.effect.moss": "Arrow of Moss",
+
+
   "effect.thrive.lantern_berry_juice": "Lantern Berry Juice",
   "effect.thrive.super_hunger": "Super Hunger",
   "effect.thrive.appetite": "Appetite",
   "effect.thrive.blinding": "Blinding",
   "effect.thrive.milk": "Milk",
+  "effect.thrive.moss": "Moss",
 
   "biome.thrive.moss": "Moss",
   "biome.thrive.garden": "Garden",
@@ -86,8 +92,6 @@
   "entity.thrive.primed_lantern_berry": "Primed Lantern Berry",
   "entity.thrive.mossy_zombie": "Mossy Zombie",
   "entity.thrive.lantern_berry_creeper": "Lantern Berry Creeper",
-  "entity.thrive.grass_land_sheep": "Grass Land Sheep",
-  "entity.thrive.grass_land_sheep.title": "Grass Devourer",
   "entity.thrive.sun": "Sun",
   "entity.thrive.garden_bee": "Garden Bee",
   "entity.thrive.garden_bee.patrol": "Garden Bee: Free Roam",
@@ -95,7 +99,7 @@
   "entity.thrive.garden_pillager": "Garden Pillager",
   "entity.thrive.garden_witch": "Garden Witch",
   "entity.thrive.breeze_core": "Breeze Core",
-  "entity.thrive.wind_blade": "Wind Blade",
+  "entity.thrive.fishing_area": "Fishing Area",
 
 
   "subtitles.thrive.sun_berry_ignite": "Sun Berry ignites",

@@ -1,53 +1,50 @@
 package com.thelema.thrive.generic.blockentity.modifier.garden;
 
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
-import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
+import com.thelema.thrive.generic.blockentity.modifier.BiomeTypeChanger;
+import com.thelema.thrive.generic.blockentity.modifier.PhasedModifier;
 import com.thelema.thrive.generic.blockentity.modifier.Ring;
-import com.thelema.thrive.generic.blockentity.modifier.Succession;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
-
-public class ForestToGarden implements BiomeModifier {
+public class ForestToGarden extends PhasedModifier {
 
     static final ResourceKey<Biome> SOURCE = ResourceKey.create(
             Registries.BIOME, ResourceLocation.withDefaultNamespace("forest"));
 
-    private static final Succession FOREST_TO_GARDEN = new Succession(SOURCE, GardenHelper.TARGET);
+    private static final BiomeTypeChanger FOREST_TO_GARDEN =
+            new BiomeTypeChanger(SOURCE, GardenHelper.TARGET);
 
-    @Override
-    public boolean canUse(ServerLevel level, BiomeCoreBlockEntity be) {
-        return level.getBiome(be.getBlockPos()).is(SOURCE);
+    public ForestToGarden() {
+        addPos(Ring.TICK_20, ForestToGarden::clear);     // PREPARE
+        addPos(Ring.TICK_20, ForestToGarden::garden);    // GARDEN
+        addPos(Ring.TICK_20, ForestToGarden::boneMeal);  // BONE_MEAL
+        addBS(Ring.TICK_20, FOREST_TO_GARDEN);           // REWRITE
+        addFinish(GardenHelper.TREE_GARDEN);             // DONE
     }
 
     @Override
-    public boolean tick(ServerLevel level, BiomeCoreBlockEntity be) {
-        int phase = getPhase(be);
-        if (phase >= GardenHelper.PHASE_DONE) {
-            replaceStructure(level, be, GardenHelper.TREE_GARDEN);
-            return true;
-        }
+    public boolean canUse(BiomeCoreBlockEntity be) {
+        return be.getLevel().getBiome(be.getBlockPos()).is(SOURCE);
+    }
 
-        if (phase == GardenHelper.PHASE_REWRITE) {
-            boolean done = forBS(be, Ring.DEFAULT, FOREST_TO_GARDEN);
-            if (done) nextPhase(be);
-            return false;
-        }
+    // ── 三个阶段包装：只处理 forest 地区 ──
 
-        boolean done = forPos(be, Ring.DEFAULT, (b, p) -> {
-            if (level.getBiome(p).is(GardenHelper.TARGET)) return;
-            switch (phase) {
-                case GardenHelper.PHASE_PREPARE -> GardenHelper.clear(level, p);
-                case GardenHelper.PHASE_GARDEN -> GardenHelper.garden(level, be, p);
-                case GardenHelper.PHASE_BONE_MEAL -> GardenHelper.boneMeal(level, be, p);
-            }
-        });
+    private static void clear(BiomeCoreBlockEntity be, BlockPos p) {
+        if (!be.getLevel().getBiome(p).is(SOURCE)) return;
+        GardenHelper.clear(be, p);
+    }
 
-        if (done) nextPhase(be);
-        return false;
+    private static void garden(BiomeCoreBlockEntity be, BlockPos p) {
+        if (!be.getLevel().getBiome(p).is(SOURCE)) return;
+        GardenHelper.garden(be, p);
+    }
+
+    private static void boneMeal(BiomeCoreBlockEntity be, BlockPos p) {
+        if (!be.getLevel().getBiome(p).is(SOURCE)) return;
+        GardenHelper.boneMeal(be, p);
     }
 }

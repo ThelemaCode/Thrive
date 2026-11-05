@@ -1,7 +1,7 @@
 package com.thelema.thrive.client.render.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.thelema.thrive.generic.entity.PrimedSunBerry;
+import com.thelema.thrive.generic.entity.misc.PrimedSunBerry;
 import com.thelema.thrive.register.BlockRegister;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;

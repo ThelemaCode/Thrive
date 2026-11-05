@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.thelema.thrive.register.BlockRegister;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.LevelAccessor;
@@ -108,7 +109,8 @@ public class Lake extends Feature<Lake.LakeConfig> {
                     BlockState s = level.getBlockState(p);
                     if (s.isAir()) continue;
                     if (s.getBlock() instanceof BushBlock) {
-                        level.setBlock(p, AIR, 2);
+                        // 清植物
+                        set(level, p, AIR);
                     } else {
                         break;   // 撞到实心方块就停
                     }
@@ -127,7 +129,8 @@ public class Lake extends Feature<Lake.LakeConfig> {
                     if (current.is(BlockTags.FEATURES_CANNOT_REPLACE)) continue;
 
                     boolean aboveWater = y >= 4;
-                    level.setBlock(p, aboveWater ? AIR : fluid, 2);
+                    // 填充
+                    set(level, p, aboveWater ? AIR : fluid);
                 }
             }
         }
@@ -151,7 +154,8 @@ public class Lake extends Feature<Lake.LakeConfig> {
                         BlockPos p = start.offset(x, y, z);
                         BlockState s = level.getBlockState(p);
                         if (s.isSolid() && !s.is(BlockTags.LAVA_POOL_STONE_CANNOT_REPLACE)) {
-                            level.setBlock(p, barrier, 2);
+                            // 屏障
+                            set(level, p, barrier);
                         }
                     }
                 }
@@ -159,6 +163,17 @@ public class Lake extends Feature<Lake.LakeConfig> {
         }
 
         return true;
+    }
+
+    /** setBlock(2) + 运行时补光照。生成阶段（WorldGenRegion）跳过。 */
+    private static void set(LevelAccessor level, BlockPos p, BlockState s) {
+        BlockState old = level.getBlockState(p);
+        level.setBlock(p, s, 2);
+        if (level instanceof ServerLevel sl
+                && (old.getLightBlock(sl, p) != s.getLightBlock(sl, p)
+                || old.getLightEmission(sl, p) != s.getLightEmission(sl, p))) {
+            sl.getLightEngine().checkBlock(p);
+        }
     }
 
     public record LakeConfig(BlockState fluid, BlockState barrier) implements FeatureConfiguration {

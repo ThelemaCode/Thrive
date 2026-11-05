@@ -14,7 +14,6 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -67,9 +66,8 @@ public class BiomeCoreBlockEntity extends BlockEntity {
             BiomeModifier c = be.activeBiomeModifierId == null
                     ? null
                     : BiomeModifierRegistry.get(be.activeBiomeModifierId);
-            if (c != null && runTick(c, (ServerLevel) level, be)) {
-                be.resetConversion();     // runTick 返回 true → 转换器自己收尾了，BE 清状态
-            }
+            // runTick 返回 true → 转换器自己收尾了，BE 清状态
+            if (c != null && runTick(c, be)) be.resetConversion();
             return;
         }
 
@@ -87,7 +85,7 @@ public class BiomeCoreBlockEntity extends BlockEntity {
         for (ResourceLocation id : BiomeModifierRegistry.getCandidates(stack.getItem())) {
             BiomeModifier modifier = BiomeModifierRegistry.get(id);
             if (modifier == null) continue;
-            if (modifier.canUse((ServerLevel) level, be)) {
+            if (modifier.canUse(be)) {
                 chosenId = id;
                 break;
             }

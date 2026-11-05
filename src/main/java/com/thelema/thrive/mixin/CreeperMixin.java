@@ -1,6 +1,6 @@
 package com.thelema.thrive.mixin;
 
-import com.thelema.thrive.generic.entity.LanternBerryCreeper;
+import com.thelema.thrive.generic.entity.mob.LanternBerryCreeper;
 import net.minecraft.world.entity.monster.Creeper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

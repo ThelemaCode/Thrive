@@ -9,7 +9,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.GrassBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -46,7 +45,6 @@ public class BlockRegister {
     public static final DeferredHolder<Block, Block> BIOME_SAPLING;
     public static final DeferredHolder<Block, Block> CLOUD;
     public static final DeferredHolder<Block, Block> WISPY_CLOUD;
-    public static final DeferredHolder<Block, Block> BREEZE_CORE;
 
     static {
 
@@ -82,11 +80,6 @@ public class BlockRegister {
         CLOUD = registerWithItem("cloud", Cloud::new);
         WISPY_CLOUD = registerWithItem("wispy_cloud", Cloud::new);
 
-        BREEZE_CORE = registerWithItem("breeze_core", () -> new Block(
-                BlockBehaviour.Properties.of()
-                        .strength(0.3F, 0.0F)
-                        .sound(SoundType.WOOL)
-        ));
     }
 
 

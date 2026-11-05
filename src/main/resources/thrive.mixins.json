@@ -16,7 +16,9 @@
     "WitchMixin",
     "WitchAccessor",
     "AbstractArrowMixin",
-    "FishingHookMixin"
+    "FishingHookMixin",
+    "BreezeDeflectionMixin",
+    "FlintAndSteelItemMixin"
   ],
   "client": [
     "LocalPlayerMixin"

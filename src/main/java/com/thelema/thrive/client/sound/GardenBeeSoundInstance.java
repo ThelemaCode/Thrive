@@ -1,6 +1,6 @@
 package com.thelema.thrive.client.sound;
 
-import com.thelema.thrive.generic.entity.GardenBee;
+import com.thelema.thrive.generic.entity.mob.GardenBee;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;

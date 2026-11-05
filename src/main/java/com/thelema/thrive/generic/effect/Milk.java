@@ -55,7 +55,7 @@ public class Milk extends MobEffect {
         if (isInternalUpdate) return;
 
         MobEffectInstance added = event.getEffectInstance();
-        if (added == null || added.getEffect().value() instanceof Milk) return;
+        if (added.getEffect().value() instanceof Milk) return;
 
         if (event.getEntity().hasEffect(EffectRegister.MILK) && added.getCures().contains(EffectCures.MILK)) {
             int cost = calculateCost(added);

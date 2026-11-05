@@ -1,7 +1,7 @@
 package com.thelema.thrive.generic.block;
 
 import com.thelema.thrive.generic.blockentity.SunBerryBlockEntity;
-import com.thelema.thrive.generic.entity.PrimedSunBerry;
+import com.thelema.thrive.generic.entity.misc.PrimedSunBerry;
 import com.thelema.thrive.register.BlockRegister;
 import com.thelema.thrive.register.SoundRegister;
 import net.minecraft.core.BlockPos;

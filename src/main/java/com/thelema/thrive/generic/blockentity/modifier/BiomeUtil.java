@@ -15,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
@@ -28,14 +29,9 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.common.extensions.IBlockStateExtension;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
@@ -44,17 +40,14 @@ public final class BiomeUtil {
 
     private BiomeUtil() {}
 
-    /** dirty 积压阈值，超过立即 flush。 */
-    private static final int FLUSH_THRESHOLD = 256;
-
     /** 全局待重发 chunk，按维度隔离。 */
     private static final Map<ResourceKey<Level>, Set<Long>> DIRTY = new ConcurrentHashMap<>();
 
     // =======================   生命周期   =====================================
 
     /** BE 统一入口，失败时推进 tick。 */
-    public static boolean runTick(BiomeModifier modifier, ServerLevel level, BiomeCoreBlockEntity be) {
-        boolean done = modifier.tick(level, be);
+    public static boolean runTick(BiomeModifier modifier, BiomeCoreBlockEntity be) {
+        boolean done = modifier.tick(be);
         if (!done) setTick(be, getTick(be) + 1);
         return done;
     }
@@ -65,14 +58,6 @@ public final class BiomeUtil {
     /** 写入转换进度。 */
     public static void setTick(BiomeCoreBlockEntity be, long v) { be.data.putLong("tick", v); }
 
-    /** 读取当前阶段号。 */
-    public static int getPhase(BiomeCoreBlockEntity be) { return be.data.getInt("phase"); }
-
-    /** 进入下一阶段，tick 归 -1。 */
-    public static void nextPhase(BiomeCoreBlockEntity be) {
-        be.data.putInt("phase", getPhase(be) + 1);
-        setTick(be, -1);
-    }
 
     // =======================   遍历   =====================================
 
@@ -126,17 +111,27 @@ public final class BiomeUtil {
 
     // =======================   叶操作   =====================================
 
-    /** setBlock，仅在光照变化时刷新光照。 */
-    public static void set(ServerLevel level, BlockPos p, BlockState s) {
+    /**
+     * setBlock + 条件光照刷新。
+     * <p>
+     * 收 {@link LevelAccessor}：运行时（ServerLevel）改方块后按需刷新光照；
+     * 生成阶段（WorldGenRegion）只 setBlock，光照由 chunk 完成时统一算。
+     * <p>
+     * 光照新旧值都在 {@code setBlock} 之前求值，避免依赖邻居的方块拿到错值。
+     */
+    public static void set(LevelAccessor level, BlockPos p, BlockState s) {
         BlockState old = level.getBlockState(p);
-        level.setBlock(p, s, 2);
-        if (lightChanged(level, p, old, s)) level.getLightEngine().checkBlock(p);
-    }
+        if (old == s) return;
 
-    /** 新旧方块的透光性或发光强度是否不同。 */
-    private static boolean lightChanged(ServerLevel level, BlockPos p, BlockState old, BlockState now) {
-        return old.getLightBlock(level, p) != now.getLightBlock(level, p)
-                || old.getLightEmission(level, p) != now.getLightEmission(level, p);
+        int oldBlock = old.getLightBlock(level, p);
+        int oldEmit  = old.getLightEmission(level, p);
+        int newBlock = s.getLightBlock(level, p);
+        int newEmit  = s.getLightEmission(level, p);
+
+        level.setBlock(p, s, 2);
+
+        if (level instanceof ServerLevel sl && (oldBlock != newBlock || oldEmit != newEmit))
+            sl.getLightEngine().checkBlock(p);
     }
 
     /** 取当前维度的 dirty 集合。 */
@@ -144,18 +139,14 @@ public final class BiomeUtil {
         return DIRTY.computeIfAbsent(level.dimension(), k -> ConcurrentHashMap.newKeySet());
     }
 
-    /** 标记方块所在 chunk 待重发。 */
+    /** 标记方块所在 chunk 待重发。只入 set，发送由 {@link #onTick} 统一做。 */
     public static void markDirty(ServerLevel level, BlockPos p) {
-        Set<Long> set = dirtySet(level);
-        set.add(ChunkPos.asLong(p.getX() >> 4, p.getZ() >> 4));
-        if (set.size() >= FLUSH_THRESHOLD) flush(level);
+        dirtySet(level).add(ChunkPos.asLong(p.getX() >> 4, p.getZ() >> 4));
     }
 
     /** 按 chunk key 直接标记待重发。 */
     private static void markDirtyChunk(ServerLevel level, long chunkKey) {
-        Set<Long> set = dirtySet(level);
-        set.add(chunkKey);
-        if (set.size() >= FLUSH_THRESHOLD) flush(level);
+        dirtySet(level).add(chunkKey);
     }
 
     /** 每 5 tick 全局 flush 一次。 */
@@ -165,16 +156,22 @@ public final class BiomeUtil {
         for (ServerLevel level : e.getServer().getAllLevels()) flush(level);
     }
 
-    /** 重发该维度所有 dirty chunk。 */
+    /**
+     * 重发该维度所有 dirty chunk。
+     * <p>
+     * 未加载的 chunk 不 remove，留在 set 里等加载后再发——
+     * 若直接丢弃，玩家走远再回来会看到旧光照。
+     */
     public static void flush(ServerLevel level) {
         Set<Long> set = DIRTY.get(level.dimension());
         if (set == null || set.isEmpty()) return;
         var iter = set.iterator();
         while (iter.hasNext()) {
-            ChunkPos cp = new ChunkPos(iter.next());
-            iter.remove();
+            long key = iter.next();
+            ChunkPos cp = new ChunkPos(key);
             ChunkAccess chunk = level.getChunk(cp.x, cp.z, ChunkStatus.FULL, false);
-            if (!(chunk instanceof LevelChunk lc)) continue;
+            if (!(chunk instanceof LevelChunk lc)) continue;   // 未加载，下轮再试
+            iter.remove();
             for (ServerPlayer player : level.getChunkSource().chunkMap.getPlayers(cp, false))
                 player.connection.send(new ClientboundLevelChunkWithLightPacket(lc, level.getLightEngine(), null, null));
         }

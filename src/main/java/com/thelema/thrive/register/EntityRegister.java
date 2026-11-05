@@ -1,8 +1,11 @@
 package com.thelema.thrive.register;
 
 import com.thelema.thrive.ThriveMod;
-import com.thelema.thrive.generic.entity.*;
-import com.thelema.thrive.generic.entity.projectile.WindBlade;
+import com.thelema.thrive.generic.entity.misc.FishingArea;
+import com.thelema.thrive.generic.entity.misc.PrimedLanternBerry;
+import com.thelema.thrive.generic.entity.misc.PrimedSunBerry;
+import com.thelema.thrive.generic.entity.misc.Sun;
+import com.thelema.thrive.generic.entity.mob.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.*;
@@ -37,14 +40,13 @@ public class EntityRegister {
     public static final DeferredHolder<EntityType<?>, EntityType<MossyZombie>> MOSSY_ZOMBIE;
     public static final DeferredHolder<EntityType<?>, EntityType<PrimedLanternBerry>> PRIMED_LANTERN_BERRY;
     public static final DeferredHolder<EntityType<?>, EntityType<LanternBerryCreeper>> LANTERN_BERRY_CREEPER;
-    public static final DeferredHolder<EntityType<?>, EntityType<GrassLandSheep>> GRASS_LAND_SHEEP;
     public static final DeferredHolder<EntityType<?>, EntityType<GardenBee>> GARDEN_BEE;
     public static final DeferredHolder<EntityType<?>, EntityType<GardenPillager>> GARDEN_PILLAGER;
     public static final DeferredHolder<EntityType<?>, EntityType<PrimedSunBerry>> PRIMED_SUN_BERRY;
     public static final DeferredHolder<EntityType<?>, EntityType<Sun>> SUN;
     public static final DeferredHolder<EntityType<?>, EntityType<GardenWitch>> GARDEN_WITCH;
     public static final DeferredHolder<EntityType<?>, EntityType<BreezeCore>> BREEZE_CORE;
-    public static final DeferredHolder<EntityType<?>, EntityType<WindBlade>> WIND_BLADE;
+    public static final DeferredHolder<EntityType<?>, EntityType<FishingArea>> FISHING_AREA;
 
     static {
         MOSSY_ZOMBIE = ENTITIES.register("mossy_zombie", () -> EntityType.Builder.of(MossyZombie::new, MobCategory.MONSTER)
@@ -61,10 +63,6 @@ public class EntityRegister {
         LANTERN_BERRY_CREEPER = ENTITIES.register("lantern_berry_creeper", () -> EntityType.Builder.of(LanternBerryCreeper::new, MobCategory.MONSTER)
                 .sized(1.50f, 0.98f)
                 .build("lantern_berry_creeper"));
-
-        GRASS_LAND_SHEEP = ENTITIES.register("grass_land_sheep", () -> EntityType.Builder.of(GrassLandSheep::new, MobCategory.AMBIENT)
-                .sized(1.0f, 1.0f)
-                .build("grass_land_sheep"));
 
         GARDEN_BEE = ENTITIES.register("garden_bee", () -> EntityType.Builder.of(GardenBee::new, MobCategory.CREATURE)
                 .sized(0.7f, 0.6f)
@@ -105,12 +103,12 @@ public class EntityRegister {
                 .fireImmune()
                 .build("breeze_core"));
 
-        WIND_BLADE = ENTITIES.register("wind_blade", () -> EntityType.Builder
-                .<WindBlade>of(WindBlade::new, MobCategory.MISC)
-                .sized(0.4F, 0.4F)
-                .clientTrackingRange(4)
-                .updateInterval(10)
-                .build("wind_blade"));
+        FISHING_AREA = ENTITIES.register("fishing_area", () -> EntityType.Builder
+                .of(FishingArea::new, MobCategory.MISC)
+                .sized(1.0F, 1.0F)             // 碰撞箱大小
+                .clientTrackingRange(10)       // 客户端追踪范围（因为它不可见，给个基础值即可）
+                .build("fishing_area"));
+
     }
 
     // ========== 事件注册 ==========
@@ -118,7 +116,6 @@ public class EntityRegister {
     public static void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(MOSSY_ZOMBIE.get(), MossyZombie.createAttributes().build());
         event.put(LANTERN_BERRY_CREEPER.get(), LanternBerryCreeper.createAttributes().build());
-        event.put(GRASS_LAND_SHEEP.get(), GrassLandSheep.createAttributes().build());
         event.put(GARDEN_BEE.get(), GardenBee.createAttributes().build());
         event.put(GARDEN_PILLAGER.get(), GardenPillager.createAttributes().build());
         event.put(GARDEN_WITCH.get(), GardenWitch.createAttributes().build());
@@ -166,7 +163,6 @@ public class EntityRegister {
                 || type == LANTERN_BERRY_CREEPER.get()
                 || type == GARDEN_PILLAGER.get()
                 || type == GARDEN_WITCH.get()
-                || type == GRASS_LAND_SHEEP.get()
                 || type == GARDEN_BEE.get();
     }
 

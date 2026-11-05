@@ -1,13 +1,8 @@
 package com.thelema.thrive.register;
 
 import com.thelema.thrive.ThriveMod;
-import com.thelema.thrive.generic.item.BiomeTwig;
-import com.thelema.thrive.generic.item.BreezeSword;
-import com.thelema.thrive.generic.item.HungerSnack;
+import com.thelema.thrive.generic.item.RampantMoss;
 import com.thelema.thrive.generic.item.Whistle;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.food.Foods;
 import net.minecraft.world.item.HoneyBottleItem;
 import net.minecraft.world.item.Item;
@@ -36,15 +31,13 @@ public class ItemRegister {
         return ITEM.register(name, () -> new HoneyBottleItem(new Item.Properties().craftRemainder(Items.GLASS_BOTTLE).food(Foods.HONEY_BOTTLE).stacksTo(16)));
     }
 
-    public static final DeferredHolder<Item, Item> FRESH_GRASS;
-    public static final DeferredHolder<Item, Item> FRESH_GRASS_PASTE;
-    public static final DeferredHolder<Item, Item> HUNGER_SNACK;
-    public static final DeferredHolder<Item, Item> FRESH_GRASS_CAKE;
-    public static final DeferredHolder<Item, Item> BIOME_TWIG;
     public static final DeferredHolder<Item, Item> WHISTLE;
-    public static final DeferredHolder<Item, Item> BREEZE_SWORD;
+    public static final DeferredHolder<Item, Item> RAMPANT_MOSS;
+    public static final DeferredHolder<Item, Item> MOSS_COD;
 
     // 生物蛋
+    public static final DeferredHolder<Item, Item> MOSSY_ZOMBIE_SPAWN_EGG;
+    public static final DeferredHolder<Item, Item> LANTERN_BERRY_CREEPER_SPAWN_EGG;
     public static final DeferredHolder<Item, Item> GARDEN_BEE_SPAWN_EGG;
     public static final DeferredHolder<Item, Item> GARDEN_PILLAGER_SPAWN_EGG;
     public static final DeferredHolder<Item, Item> GARDEN_WITCH_SPAWN_EGG;
@@ -82,29 +75,23 @@ public class ItemRegister {
     // 物品
     static {
 
-        FRESH_GRASS = simpleItem("fresh_grass");
-
-        FRESH_GRASS_PASTE = ITEM.register("fresh_grass_paste",
-                () -> new Item(new Item.Properties()
-                        .food(new FoodProperties.Builder()
-                                .nutrition(5)
-                                .saturationModifier(0.6F)
-                                .effect(() -> new MobEffectInstance(MobEffects.HUNGER, 2400, 4), 1.0F)
-                                .build())));
-        HUNGER_SNACK = ITEM.register("hunger_snack", HungerSnack::new);
-        FRESH_GRASS_CAKE = ITEM.register("fresh_grass_cake", () -> new Item(new Item.Properties()
-                .food(new FoodProperties.Builder()
-                        .nutrition(5)
-                        .saturationModifier(0.6F)
-                        .effect(() -> new MobEffectInstance(EffectRegister.APPETITE, 24000, 0), 1.0F)
-                        .build())));
-
-        BIOME_TWIG = ITEM.register("biome_twig", BiomeTwig::new);
 
         WHISTLE = ITEM.register("whistle", Whistle::new);
+        RAMPANT_MOSS = ITEM.register("rampant_moss", RampantMoss::new);
+        MOSS_COD = ITEM.register("moss_cod", () -> new Item(new Item.Properties().food(Foods.COD)));
 
-        BREEZE_SWORD = ITEM.register("breeze_sword", BreezeSword::new);
 
+        MOSSY_ZOMBIE_SPAWN_EGG = ITEM.register("mossy_zombie_spawn_egg", () -> new DeferredSpawnEggItem(
+                EntityRegister.MOSSY_ZOMBIE,
+                0x4A5D23,   // 底：苔藓深绿
+                0x8B9A46,   // 高光：苔藓亮绿
+                new Item.Properties()));
+
+        LANTERN_BERRY_CREEPER_SPAWN_EGG = ITEM.register("lantern_berry_creeper_spawn_egg", () -> new DeferredSpawnEggItem(
+                EntityRegister.LANTERN_BERRY_CREEPER,
+                0x4C8B3A,   // 底：苦力怕绿
+                0xFFAA22,   // 高光：灯笼浆果橙
+                new Item.Properties()));
 
         GARDEN_BEE_SPAWN_EGG = ITEM.register("garden_bee_spawn_egg", () -> new DeferredSpawnEggItem(
                 EntityRegister.GARDEN_BEE,

@@ -1,6 +1,6 @@
 package com.thelema.thrive.client.render.entity;
 
-import com.thelema.thrive.generic.entity.GardenPillager;
+import com.thelema.thrive.generic.entity.mob.GardenPillager;
 import net.minecraft.client.model.IllagerModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

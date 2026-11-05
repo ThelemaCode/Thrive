@@ -2,7 +2,7 @@ package com.thelema.thrive.generic.block;
 
 import com.mojang.serialization.MapCodec;
 import com.thelema.thrive.generic.blockentity.GardenBeeNestBlockEntity;
-import com.thelema.thrive.generic.entity.GardenBee;
+import com.thelema.thrive.generic.entity.mob.GardenBee;
 import com.thelema.thrive.register.BlockEntityRegister;
 import net.minecraft.Util;
 import net.minecraft.advancements.CriteriaTriggers;
