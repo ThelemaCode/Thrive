@@ -19,9 +19,25 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // 本地 libs 文件夹（存放前置模组 jar）
-    flatDir { dirs 'libs' }
 
+
+    maven { url = "https://neoforged.forgecdn.net/releases" }
+    maven { url = "https://neoforged.forgecdn.net/mojang-meta" }
+    maven { url = "https://maven.parchmentmc.org" } // Parchment 专用
+
+
+    flatDir { dirs 'libs' }
+}
+
+// maven.neoforged.net 在国内常被污染/阻断（解析到不可达 IP，连接一直停在 SYN_SENT，
+// 每次构建都要等连接超时+重试）。ModDevGradle 等插件内部还会自行添加该仓库，
+// 这里统一把任何指向它的仓库改写到 NeoForge 官方 CDN。
+allprojects {
+    repositories.withType(org.gradle.api.artifacts.repositories.MavenArtifactRepository).configureEach { repo ->
+        if (repo.url.toString().contains('maven.neoforged.net')) {
+            repo.url = uri('https://neoforged.forgecdn.net/releases')
+        }
+    }
 }
 
 base {

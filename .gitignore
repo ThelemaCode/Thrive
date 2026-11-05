@@ -1,52 +1,37 @@
-### Gradle ###
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/**/build/
+# 1) 忽略根目录一切
+/*
 
-### IntelliJ IDEA ###
-.idea/
-*.iws
-*.iml
-*.ipr
-out/
-!**/src/**/out/
+# 2) 放行 src
+!/src/
+!/src/**
 
-.run/
+# 3) 放行构建必需文件
+!/build.gradle
+!/settings.gradle
+!/gradle.properties
+!/gradlew
+!/gradlew.bat
+!/gradle/
+!/gradle/wrapper/
+!/gradle/wrapper/gradle-wrapper.jar
+!/gradle/wrapper/gradle-wrapper.properties
 
-### Eclipse ###
-.apt_generated
-.classpath
-.eclipse/
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/**/bin/
+# 4) 放行协作/规范文件
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/.github/
+!/.github/**
 
-### VS Code ###
-.vscode/
+# 5) 按需取消注释
+!/LICENSE.txt
+!/LICENSE
 
-### Mac OS ###
-.DS_Store
-
-### Minecraft Modding ###
-run/
-!**/src/**/run/
-**/src/generated/**/.cache/
-repo/
-!**/src/**/repo/
-
-### 本地反编译源码（勿提交） ###
-mc/
-
-### skill ###
-skill/
-
-### tool ###
-tool
-
-### dsh ###
-_dsh-research
+# 6) src 内部仍排除产物
+/src/**/.idea/
+/src/**/*.iml
+/src/**/out/
+/src/**/build/
+/src/**/bin/
+/src/**/.gradle/
+/src/**/.cache/
