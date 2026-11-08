@@ -1,35 +1,36 @@
 package com.thelema.thrive.generic.blockentity;
 
 import com.thelema.thrive.generic.blockentity.cap.Rotator;
-import com.thelema.thrive.generic.blockentity.cap.Surface;
 import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
 import com.thelema.thrive.generic.blockentity.modifier.BiomeModifierRegistry;
 import com.thelema.thrive.register.BlockEntityRegister;
-import com.thelema.thrive.register.BlockRegister;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.runTick;
 
 public class BiomeCoreBlockEntity extends BlockEntity {
 
-    public final Surface surface = new Surface(this);
     public final Rotator rotator = new Rotator(this);
 
     /**
-     * Surface 放入物品后启动的抽取倒计时（tick）。0 = 未启动。
+     * 交互后启动的查表倒计时（tick）。0 = 未启动。
      */
-    public int checkTimer;
+    public int checkTimer = 0;
 
     /**
      * 当前运行的转换器 id。null = 空闲。
@@ -45,58 +46,96 @@ public class BiomeCoreBlockEntity extends BlockEntity {
         super(BlockEntityRegister.BIOME_CORE.get(), pos, state);
     }
 
-    public static void tick(Level level, BlockPos pos, BlockState state, BiomeCoreBlockEntity be) {
-        be.surface.tick();
-        be.rotator.tick();
-        if (level.isClientSide) return;
+    // ===== 交互逻辑 =====
 
-        // 每 10 天（240,000 tick）的黎明时分，在 Surface 中生成一个群系树苗
-        long dayTime = level.getDayTime();
-        if (dayTime > 0 && dayTime % 240000L == 0) {
-            // 如果 Surface 里面是空的，才生成
-            if (be.surface.getStack().isEmpty()) {
-                // 替换为你想要生成的物品，比如群系核心本身或其他材料
-                be.surface.set(new ItemStack(BlockRegister.BIOME_SAPLING.get()), Direction.UP);
-                be.setChanged();
-                level.sendBlockUpdated(pos, state, state, 3); // 通知客户端刷新
-            }
-        }
-        // 转换中
-        if (!be.rotator.isEmpty()) {
-            BiomeModifier c = be.activeBiomeModifierId == null
-                    ? null
-                    : BiomeModifierRegistry.get(be.activeBiomeModifierId);
-            // runTick 返回 true → 转换器自己收尾了，BE 清状态
-            if (c != null && runTick(c, be)) be.resetConversion();
+    /**
+     * 右键放入物品。
+     * 每次放入 1 个，非创造模式会消耗玩家手中的物品。
+     */
+    public void insertItem(Player player, ItemStack stack) {
+        // 转换中不许放
+        if (stack.isEmpty() || activeBiomeModifierId != null) {
             return;
         }
 
-        // 空闲：倒计时归零则抽取
-        if (be.checkTimer > 0 && --be.checkTimer == 0) {
-            extractFromSurface(level, be);
+        if (rotator.add(stack)) {
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+            }
+            resetCheckTimer();
         }
     }
 
-    private static void extractFromSurface(Level level, BiomeCoreBlockEntity be) {
-        ItemStack stack = be.surface.getStack();
-        if (stack.isEmpty()) return;
+    /**
+     * 空手取出物品。
+     * 拿出 rotator 列表中的最后一个（排序后的最后一个）。
+     */
+    public void extractItem(Player player) {
+        // 转换中不许拿
+        if (activeBiomeModifierId != null) {
+            return;
+        }
 
-        ResourceLocation chosenId = null;
-        for (ResourceLocation id : BiomeModifierRegistry.getCandidates(stack.getItem())) {
+        ItemStack removed = rotator.removeLast();
+        if (!removed.isEmpty()) {
+            if (!player.getInventory().add(removed)) {
+                player.drop(removed, false);
+            }
+            resetCheckTimer();
+        }
+    }
+
+    /**
+     * 每次交互重置 5 秒倒计时 (100 tick)。
+     */
+    private void resetCheckTimer() {
+        this.checkTimer = 100;
+        this.setChanged();
+    }
+
+    // ===== 主 tick =====
+
+    public static void tick(Level level, BlockPos pos, BlockState state, BiomeCoreBlockEntity be) {
+        if (level.isClientSide) return;
+
+        // 1. 转换中
+        if (be.activeBiomeModifierId != null) {
+            BiomeModifier c = BiomeModifierRegistry.get(be.activeBiomeModifierId);
+            if (c != null && runTick(c, be)) {
+                be.resetConversion();
+            }
+            return;
+        }
+
+        // 2. 空闲，检查倒计时归零
+        if (be.checkTimer > 0 && --be.checkTimer == 0) {
+            be.tryStartConversion();
+        }
+    }
+
+    /**
+     * 查表并启动转换。
+     */
+    private void tryStartConversion() {
+        if (rotator.isEmpty()) {
+            return;
+        }
+
+        // 提取当前物品的 List<Item>
+        List<Item> itemList = new ArrayList<>();
+        for (ItemStack stack : rotator.items) {
+            itemList.add(stack.getItem());
+        }
+
+        // 遍历所有符合该物品列表的配方
+        for (ResourceLocation id : BiomeModifierRegistry.getCandidates(itemList)) {
             BiomeModifier modifier = BiomeModifierRegistry.get(id);
-            if (modifier == null) continue;
-            if (modifier.canUse(be)) {
-                chosenId = id;
-                break;
+            if (modifier != null && modifier.canUse(this)) {
+                activeBiomeModifierId = id;
+                this.setChanged();
+                return;
             }
         }
-        if (chosenId == null) return;   // 没有可用修改器，物品留在 surface 不抽走
-
-        ItemStack extracted = stack.copyWithCount(1);
-        if (stack.getCount() <= 1) be.surface.clear();
-        else be.surface.setCount(stack.getCount() - 1);
-        be.rotator.set(extracted);
-        be.activeBiomeModifierId = chosenId;
     }
 
     /**
@@ -107,7 +146,10 @@ public class BiomeCoreBlockEntity extends BlockEntity {
         checkTimer = 0;
         data.getAllKeys().clear();
         activeBiomeModifierId = null;
+        this.setChanged();
     }
+
+    // ===== 网络与存档 =====
 
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
@@ -117,7 +159,6 @@ public class BiomeCoreBlockEntity extends BlockEntity {
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
-        surface.save(tag, registries);
         rotator.save(tag, registries);
         return tag;
     }
@@ -125,19 +166,21 @@ public class BiomeCoreBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider regs) {
         super.saveAdditional(tag, regs);
-        surface.save(tag, regs);
         rotator.save(tag, regs);
         tag.putInt("CheckTimer", checkTimer);
         tag.put("data", data);
-        if (activeBiomeModifierId != null) tag.putString("ActiveConvertor", activeBiomeModifierId.toString());
+        if (activeBiomeModifierId != null) {
+            tag.putString("ActiveConvertor", activeBiomeModifierId.toString());
+        }
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider regs) {
         super.loadAdditional(tag, regs);
-        surface.load(tag, regs);
         rotator.load(tag, regs);
-        if (tag.contains("data")) data.merge(tag.getCompound("data"));
+        if (tag.contains("data")) {
+            data.merge(tag.getCompound("data"));
+        }
         checkTimer = tag.getInt("CheckTimer");
         if (tag.contains("ActiveConvertor")) {
             activeBiomeModifierId = ResourceLocation.parse(tag.getString("ActiveConvertor"));

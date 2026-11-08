@@ -1,91 +1,124 @@
 package com.thelema.thrive.generic.blockentity.cap;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 /**
- * 浮空旋转展示能力。
- * 物品绕 Y 轴匀速旋转，位置固定（不浮动）。
+ * 浮空环绕展示能力。
+ * 包含多个物品（上限 8 个），支持椭圆/椭球轨道与多轴自转。
  */
 public class Rotator {
 
     public final BlockEntity owner;
 
-    public ItemStack item = ItemStack.EMPTY;
-    public float rotation;
-    public float prevRotation;
+    /** 环绕展示的物品，每个物品独立存在，自动按注册 ID 排序。 */
+    public final List<ItemStack> items = new ArrayList<>();
 
-    /** 悬浮高度，方块中心往上多少格 */
-    public float height = 1.25f;
+    /** 最大容纳物品数 */
+    public static final int MAX_ITEMS = 8;
 
-    /** 每秒旋转角度 */
-    public float degreesPerSecond = 90f;
+    /** 中心点相对于方块中心的偏移量 */
+    public float ox = 0f, oy = 1.0f, oz = 0f;
+
+    /** 物品自转角速度 (度/秒) */
+    public float rx = 180f, ry = 180f, rz = 180f;
+
+    /** 物品环绕中心的角速度 (度/秒) */
+    public float crx = 0f, cry = 90f, crz = 0f;
+
+    /** 椭圆轨道半径（X/Z 控制水平椭圆，Y 用于 3D 翻转时的厚度） */
+    public float radiusX = 0.5f, radiusY = 0.5f, radiusZ = 0.5f;
 
     public Rotator(BlockEntity owner) {
         this.owner = owner;
     }
 
     public boolean isEmpty() {
-        return item.isEmpty();
+        return items.isEmpty();
     }
 
-    public void set(ItemStack stack) {
-        this.item = stack.copyWithCount(1);
-        this.rotation = 0;
-        this.prevRotation = 0;
+    public boolean isFull() {
+        return items.size() >= MAX_ITEMS;
+    }
+
+    /** 放入物品，自动排序 */
+    public boolean add(ItemStack stack) {
+        if (stack.isEmpty() || isFull()) return false;
+        items.add(stack.copyWithCount(1));
+        sortItems();
         owner.setChanged();
         sync();
+        return true;
     }
 
+    /** 取出物品（默认取出列表中的最后一个，配合排序即字典序最大的） */
+    public ItemStack removeLast() {
+        if (items.isEmpty()) return ItemStack.EMPTY;
+        ItemStack removed = items.remove(items.size() - 1);
+        owner.setChanged();
+        sync();
+        return removed;
+    }
+
+    /** 清空容器，不掉落 */
     public void clear() {
-        this.item = ItemStack.EMPTY;
+        items.clear();
         owner.setChanged();
         sync();
     }
 
-    /** 每 tick 推进旋转角度。插值由渲染器用 prevRotation → rotation 完成。 */
-    public void tick() {
-        if (item.isEmpty()) return;
-        prevRotation = rotation;
-        rotation = (rotation + degreesPerSecond / 20f) % 360f;
+    /** 掉落所有物品 */
+    public void dropAll() {
+        Level level = owner.getLevel();
+        if (level == null || level.isClientSide) return;
+        for (ItemStack stack : items) {
+            Block.popResource(level, owner.getBlockPos().above(), stack);
+        }
+        clear();
     }
 
-    public void dropItem() {
-        Level level = owner.getLevel();
-        if (item.isEmpty() || level == null || level.isClientSide) return;
-        Block.popResource(level, owner.getBlockPos().above(), item);
-        item = ItemStack.EMPTY;
-        owner.setChanged();
+    /** 基于物品注册 ID 排序，保证查询匹配的一致性 */
+    public void sortItems() {
+        items.sort(Comparator.comparing(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem())));
     }
+
+    // ===== NBT 持久化 =====
 
     public void save(CompoundTag tag, HolderLookup.Provider registries) {
-        if (!item.isEmpty()) {
-            tag.put("RotatorItem", item.save(registries));
-            tag.putFloat("RotatorAngle", rotation);
-        } else {
-            tag.putBoolean("RotatorEmpty", true);
+        ListTag list = new ListTag();
+        for (ItemStack stack : items) {
+            list.add(stack.save(registries));
         }
+        tag.put("RotatorItems", list);
     }
 
     public void load(CompoundTag tag, HolderLookup.Provider registries) {
-        if (tag.contains("RotatorItem")) {
-            item = ItemStack.parse(registries, tag.getCompound("RotatorItem")).orElse(ItemStack.EMPTY);
-            rotation = tag.getFloat("RotatorAngle");
-            prevRotation = rotation;
-        } else if (tag.contains("RotatorEmpty")) {
-            item = ItemStack.EMPTY;
+        items.clear();
+        if (tag.contains("RotatorItems", Tag.TAG_LIST)) {
+            ListTag list = tag.getList("RotatorItems", Tag.TAG_COMPOUND);
+            for (int i = 0; i < list.size(); i++) {
+                ItemStack.parse(registries, list.getCompound(i)).ifPresent(items::add);
+            }
+            sortItems(); // 读档后确保顺序一致
         }
     }
+
+    // ===== 客户端同步 =====
 
     private void sync() {
         Level level = owner.getLevel();
         if (level == null || level.isClientSide) return;
-        BlockPos pos = owner.getBlockPos();
-        level.sendBlockUpdated(pos, owner.getBlockState(), owner.getBlockState(), 3);
+        level.sendBlockUpdated(owner.getBlockPos(), owner.getBlockState(), owner.getBlockState(), 3);
     }
 }

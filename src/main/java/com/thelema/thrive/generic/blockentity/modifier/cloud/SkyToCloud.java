@@ -1,72 +1,82 @@
 package com.thelema.thrive.generic.blockentity.modifier.cloud;
 
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
-import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
-import com.thelema.thrive.generic.blockentity.modifier.BiomeTypeChanger;
-import com.thelema.thrive.generic.blockentity.modifier.Ring;
+import com.thelema.thrive.generic.blockentity.modifier.PhasedModifier;
 import com.thelema.thrive.generic.blockentity.modifier.Scattered;
 import com.thelema.thrive.register.BlockRegister;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
 
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
 
-public class SkyToCloud implements BiomeModifier {
+/**
+ * 天空 → 云。
+ * <p>
+ * 在 BE 的 chunk 覆盖范围（由 {@code be.chunkRadius} 决定）内、
+ * y 偏移 ∈ [-4, -2] 的盒里随机撒点，每点生成一朵随机尺寸的云。
+ * 每朵 50% 概率是 cloud，50% 是 wispy_cloud。放置时跳过群系核心。
+ */
+public class SkyToCloud extends PhasedModifier {
 
-    /** 启动门槛：BE 必须架到 200 以上。 */
-    static final int MIN_Y = 200;
+    /** 每批间隔（tick）。20 = 1 秒。 */
+    static final int INTERVAL = 20;
+    /** 每批撒几点（= 几朵云）。 */
+    static final int COUNT = 10;
+    /** 共几批。10 × 18 = 180 朵。 */
+    static final int PATCH = 18;
 
-    /** 云团底层的水平半径。 */
-    static final int CLUSTER_RADIUS = 2;
-    /** 云团的垂直层数（逐层收窄）。 */
-    static final int CLUSTER_LAYERS = 3;
+    /** 撒点 y 偏移范围（含两端）。 */
+    static final int Y_MIN = -4, Y_MAX = -2;
+    /** 云尺寸范围（含两端）：x/z ∈ [4,16]，y ∈ [2,3]。 */
+    static final int SIZE_XZ_MIN = 4, SIZE_XZ_MAX = 16;
+    static final int SIZE_Y_MIN = 2, SIZE_Y_MAX = 3;
 
-    static final ResourceKey<Biome> TARGET = ResourceKey.create(
-            Registries.BIOME, ResourceLocation.fromNamespaceAndPath("thrive", "cloud"));
-
-    private static final BiomeTypeChanger ANY_TO_CLOUD = new BiomeTypeChanger(null, TARGET);
-    private static final Scattered CLOUD = Scattered.of(64, 50, 64);
+    public SkyToCloud() {
+        addPhase(SkyToCloud::generate);
+    }
 
     @Override
     public boolean canUse(BiomeCoreBlockEntity be) {
+        return true;   // Sky 群系不存在，先不限制
+    }
+
+    private static boolean generate(BiomeCoreBlockEntity be) {
+        BlockPos base = be.getBlockPos();
+        int cr = 4;
+
+        int ox1 = minX(base, cr) - base.getX();
+        int ox2 = maxX(base, cr) - base.getX();
+        int oz1 = minZ(base, cr) - base.getZ();
+        int oz2 = maxZ(base, cr) - base.getZ();
+
+        Scattered spots = Scattered.of(ox1, Y_MIN, oz1, ox2, Y_MAX, oz2, INTERVAL, COUNT, PATCH);
+        return forPos(be, spots, SkyToCloud::place);
+    }
+
+    /** 以 p 为中心填随机尺寸的云，只填空气，跳过 BIOME_CORE。云/薄云各半。 */
+    static void place(BiomeCoreBlockEntity be, BlockPos p) {
         ServerLevel level = (ServerLevel) be.getLevel();
-        if (be.getBlockPos().getY() < MIN_Y) return false;   // 启动门槛
-        assert level != null;
-        return level.getBiome(be.getBlockPos()).unwrapKey()
-                .map(k -> k.location().getNamespace().equals("minecraft"))
-                .orElse(false);
-    }
+        RandomSource rng = level.random;
+        BlockState s = (rng.nextBoolean()
+                ? BlockRegister.CLOUD
+                : BlockRegister.WISPY_CLOUD).get().defaultBlockState();
 
-    @Override
-    public boolean tick(BiomeCoreBlockEntity be) {
-        boolean rewrite = forBS(be, Ring.TICK_20, ANY_TO_CLOUD);
-        boolean cloud = forPos(be, CLOUD, (b, p) -> buildCloud((ServerLevel) b.getLevel(), p));
-        return rewrite & cloud;
-    }
+        int sx = SIZE_XZ_MIN + rng.nextInt(SIZE_XZ_MAX - SIZE_XZ_MIN + 1);
+        int sy = SIZE_Y_MIN + rng.nextInt(SIZE_Y_MAX - SIZE_Y_MIN + 1);
+        int sz = SIZE_XZ_MIN + rng.nextInt(SIZE_XZ_MAX - SIZE_XZ_MIN + 1);
 
-    static void buildCloud(ServerLevel level, BlockPos p) {
-        if (!level.getBlockState(p).isAir()) return;   // 不判 y，不判 MAX_Y
+        int x0 = -sx / 2, x1 = x0 + sx - 1;
+        int y0 = -sy / 2, y1 = y0 + sy - 1;
+        int z0 = -sz / 2, z1 = z0 + sz - 1;
 
-        RandomSource random = level.random;
-        BlockState cloud = BlockRegister.CLOUD.get().defaultBlockState();
-
-        for (int dy = 0; dy < CLUSTER_LAYERS; dy++) {
-            int r = CLUSTER_RADIUS - dy;
-            for (int dx = -r; dx <= r; dx++) {
-                for (int dz = -r; dz <= r; dz++) {
-                    if (random.nextInt(3) == 0) continue;
-                    BlockPos q = p.offset(dx, dy, dz);
-                    if (!level.getBlockState(q).isAir()) continue;
-                    set(level, q, cloud);
-                    markDirty(level, q);
-                }
-            }
+        for (BlockPos q : BlockPos.betweenClosed(p.offset(x0, y0, z0), p.offset(x1, y1, z1))) {
+            BlockState cur = level.getBlockState(q);
+            if (!cur.isAir()) continue;                    // 只填空气
+            if (cur.is(BlockRegister.BIOME_CORE.get())) continue;   // 不覆盖核心
+            set(level, q, s);
+            markDirty(level, q);
         }
     }
 }

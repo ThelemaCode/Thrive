@@ -60,6 +60,9 @@ public class BreezeCore extends Mob implements GeoEntity {
      * 每个掉落物的烧炼进度（tick）。
      */
     private final Map<UUID, Integer> smeltProgress = new HashMap<>();
+    /**Home坐标*/
+    private BlockPos homePos = null;
+
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
@@ -119,6 +122,10 @@ public class BreezeCore extends Mob implements GeoEntity {
 
     @Override
     protected void customServerAiStep() {
+        // 设置 Home
+        if (homePos == null) {
+            homePos = blockPosition().immutable();
+        }
 
         // ── 水附着：被雨淋或处于水中，连续 10s ──
         if (this.isInWaterRainOrBubble()) {
@@ -201,7 +208,14 @@ public class BreezeCore extends Mob implements GeoEntity {
                     level().getMinBuildHeight() + 1,
                     level().getMaxBuildHeight() - 2);
             int tz = blockPosition().getZ() + random.nextInt(33) - 16;
-            wanderTarget = new BlockPos(tx, ty, tz);
+            BlockPos potentialTarget = new BlockPos(tx, ty, tz);
+            // 检查该点是否离 homePos 太远
+            if (homePos.distSqr(potentialTarget) > 80 * 80) {
+                // 如果太远，则放弃本次随机，直接把目标设为 homePos，让其往回飞
+                wanderTarget = homePos;
+            } else {
+                wanderTarget = potentialTarget;
+            }
             wanderCooldown = 80 + random.nextInt(80);
         }
 
@@ -327,6 +341,9 @@ public class BreezeCore extends Mob implements GeoEntity {
         tag.putInt("Flag", getFlag());
         tag.putInt("WaterTicks", waterTicks);
         tag.putInt("FireTicks", fireTicks);
+        if (homePos != null) {
+            tag.putLong("HomePos", homePos.asLong());
+        }
     }
 
     @Override
@@ -335,5 +352,8 @@ public class BreezeCore extends Mob implements GeoEntity {
         setFlag(tag.getInt("Flag"));
         waterTicks = tag.getInt("WaterTicks");
         fireTicks = tag.getInt("FireTicks");
+        if (tag.contains("HomePos")) {
+            homePos = BlockPos.of(tag.getLong("HomePos"));
+        }
     }
 }

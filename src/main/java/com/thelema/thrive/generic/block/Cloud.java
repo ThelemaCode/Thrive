@@ -14,6 +14,7 @@ public class Cloud extends HalfTransparentBlock {
     public Cloud() {
         super(BlockBehaviour.Properties.ofFullCopy(Blocks.WHITE_WOOL)
                 .noOcclusion()   // 不剔除相邻面、不阻挡视线、不窒息
+                .strength(0.5f)
                 .lightLevel(v -> 0)); // 不遮挡光照，Mixin 扫描可穿透
     }
 

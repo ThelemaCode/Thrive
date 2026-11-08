@@ -12,7 +12,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -96,16 +95,20 @@ public final class BiomeUtil {
             for (int k = 0; k < 4; k++)
                 for (int l = 0; l < 4; l++)
                     cache[(j * 4 + k) * 4 + l] = old.get(j, k, l);
+
         int qx = chunk.getPos().getMinBlockX() >> 2;
         int qy = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(sectionIndex)) >> 2;
         int qz = chunk.getPos().getMinBlockZ() >> 2;
+
         section.fillBiomesFromNoise((x, y, z, s) -> {
-            int j = x - qx, k = y - qy, l = z - qz;
-            if (j < 0 || j >= 4 || k < 0 || k >= 4 || l < 0 || l >= 4) return target;
+            int j = x - qx;
+            int k = y - qy;
+            int l = z - qz;
             int idx = (j * 4 + k) * 4 + l;
             if (!units.contains(idx)) return cache[idx];
             return shouldReplace.test(cache[idx]) ? target : cache[idx];
         }, null, qx, qy, qz);
+
         chunk.setUnsaved(true);
     }
 
@@ -186,7 +189,9 @@ public final class BiomeUtil {
         return list.isEmpty() ? null : list.get(0).pos();
     }
 
-    /** 用结构替换 BE，核心对齐，保留地表。 */
+    /**
+     * 用结构替换 BE，核心对齐，保留地表。
+     */
     public static void replaceStructure(ServerLevel level, BiomeCoreBlockEntity be, ResourceLocation toId) {
         StructureTemplate to = level.getStructureManager().get(toId).orElse(null);
         if (to == null) return;
@@ -195,21 +200,28 @@ public final class BiomeUtil {
         if (toCore == null) return;
         BlockPos toOrigin = corePos.subtract(toCore);
 
-        CompoundTag surfaceNbt = new CompoundTag();
-        be.surface.save(surfaceNbt, level.registryAccess());
-        be.surface.item = null;
-        be.rotator.item = ItemStack.EMPTY;
+        // 1. 统一保存 Rotator 的数据
+        CompoundTag capsNbt = new CompoundTag();
+        be.rotator.save(capsNbt, level.registryAccess());
 
+        // 2. 清空旧的数据，准备被结构覆盖
+        be.rotator.clear();
+
+        // 3. 放置结构（旧的方块实体会被覆盖并销毁）
         to.placeInWorld(level, toOrigin, toOrigin, new StructurePlaceSettings()
                         .setRotation(Rotation.NONE).setMirror(Mirror.NONE)
                         .setIgnoreEntities(false).addProcessor(BlockIgnoreProcessor.AIR),
                 level.random, 50);
 
+        // 4. 如果新位置依然是核心，把数据重新注入给新的 BE
         if (level.getBlockEntity(corePos) instanceof BiomeCoreBlockEntity newBe) {
-            newBe.surface.load(surfaceNbt, level.registryAccess());
+            newBe.rotator.load(capsNbt, level.registryAccess());
             newBe.setChanged();
+            // 强制同步给客户端刷新渲染
+            level.sendBlockUpdated(corePos, newBe.getBlockState(), newBe.getBlockState(), 3);
         }
 
+        // 5. 更新光照和客户端
         Vec3i size = to.getSize();
         for (BlockPos p : BlockPos.betweenClosed(toOrigin,
                 toOrigin.offset(size.getX() - 1, size.getY() - 1, size.getZ() - 1))) {
@@ -218,17 +230,37 @@ public final class BiomeUtil {
         }
     }
 
-    // =======================   地理边界   =====================================
+    // =======================   边界判断   =====================================
 
-    /** 转换 y 下界，低不过世界底。 */
-    public static int minY(BiomeCoreBlockEntity be) {
-        int sectionMin = (be.getBlockPos().getY() >> 4) << 4;
-        return Math.max(sectionMin - 32, be.getLevel().getMinBuildHeight());
+    /** 中心 section/chunk 的最小坐标。 */
+    private static int min(BlockPos center, int chunkRadius, int axis) {
+        return ((coord(center, axis) >> 4) - chunkRadius) << 4;
     }
 
-    /** 转换 y 上界，高不过世界顶。 */
-    public static int maxY(BiomeCoreBlockEntity be) {
-        int sectionMin = (be.getBlockPos().getY() >> 4) << 4;
-        return Math.min(sectionMin + 47, be.getLevel().getMaxBuildHeight() - 1);
+    /** 中心 section/chunk 的最大坐标（含末格）。 */
+    private static int max(BlockPos center, int chunkRadius, int axis) {
+        return (((coord(center, axis) >> 4) + chunkRadius) << 4) + 15;
     }
+
+    private static int coord(BlockPos p, int axis) {
+        return switch (axis) {
+            case 0 -> p.getX();
+            case 1 -> p.getY();
+            default -> p.getZ();
+        };
+    }
+
+    /** x 下界，对齐 chunk 边界。 */
+    public static int minX(BlockPos center, int chunkRadius) { return min(center, chunkRadius, 0); }
+    /** x 上界，对齐 chunk 边界。 */
+    public static int maxX(BlockPos center, int chunkRadius) { return max(center, chunkRadius, 0); }
+    /** y 下界，对齐 section 边界。 */
+    public static int minY(BlockPos center, int chunkRadius) { return min(center, chunkRadius, 1); }
+    /** y 上界，对齐 section 边界。 */
+    public static int maxY(BlockPos center, int chunkRadius) { return max(center, chunkRadius, 1); }
+    /** z 下界，对齐 chunk 边界。 */
+    public static int minZ(BlockPos center, int chunkRadius) { return min(center, chunkRadius, 2); }
+    /** z 上界，对齐 chunk 边界。 */
+    public static int maxZ(BlockPos center, int chunkRadius) { return max(center, chunkRadius, 2); }
+
 }

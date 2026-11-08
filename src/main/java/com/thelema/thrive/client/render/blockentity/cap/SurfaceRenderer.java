@@ -1,4 +1,4 @@
-package com.thelema.thrive.client.render.blockentity.other;
+package com.thelema.thrive.client.render.blockentity.cap;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
