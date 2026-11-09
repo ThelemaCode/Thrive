@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -80,11 +81,17 @@ public class Sun extends Entity {
             targetY = computeTargetY();
             positioned = true;
         }
+
         double dy = targetY - this.getY();
-        if (Math.abs(dy) > 0.05) {
-            this.setPos(this.getX(), this.getY() + dy / 8.0, this.getZ());
-        } else if (dy != 0) {
-            this.setPos(this.getX(), targetY, this.getZ());
+        if (dy != 0) {
+            // 如果距离小于最大步长，直接精准吸附到位，防止抖动
+            if (Math.abs(dy) <= 0.15) {
+                this.setPos(this.getX(), targetY, this.getZ());
+            } else {
+                // 计算平滑步长，并限制在 [-0.15, 0.15] 之间（即最大 3格/秒）
+                double step = Mth.clamp(dy / 8.0, -0.15, 0.15);
+                this.setPos(this.getX(), this.getY() + step, this.getZ());
+            }
         }
 
         if (age > 0 && age % DAMAGE_INTERVAL == 0) {
