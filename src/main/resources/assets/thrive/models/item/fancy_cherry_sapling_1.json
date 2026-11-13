@@ -1,3 +1,6 @@
 {
-  "parent": "thrive:block/fancy_berry_sapling_1"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:block/cherry_sapling"
+  }
 }
