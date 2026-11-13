@@ -41,6 +41,8 @@ public class BiomeCoreBlockEntity extends BlockEntity {
      */
     public ResourceLocation activeBiomeModifierId;
 
+    /**影响的半径， 0 为只影响本格*/
+    public int chunkRadius = 4;
     /**
      * 通用NBT
      */
@@ -147,7 +149,6 @@ public class BiomeCoreBlockEntity extends BlockEntity {
             be.tryStartConversion();
         }
     }
-
 
     /**
      * 查表并启动转换。

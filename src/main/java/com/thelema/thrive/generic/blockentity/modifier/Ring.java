@@ -6,32 +6,20 @@ import net.minecraft.server.level.ServerLevel;
 
 public final class Ring implements PosFinder {
 
-    /**
-     * chunk 半径。范围 (2×CHUNK_RADIUS+1)³ chunk。
-     */
-    private static final int CHUNK_RADIUS = 4;
-
-
-    private static final int MAX_RING = CHUNK_RADIUS * 16 + 15;
-
-    /**
-     * 1 秒 1 环。
-     */
-    public static final Ring TICK_20 = new Ring(20, MAX_RING, 0, 0, 0);
-    /**
-     * 0.5 秒 1 环。
-     */
-    public static final Ring TICK_10 = new Ring(10, MAX_RING, 0, 0, 0);
+    /** 1 秒 1 环。 */
+    public static final Ring TICK_20 = new Ring(20);
+    /** 0.5 秒 1 环。 */
+    public static final Ring TICK_10 = new Ring(10);
 
     private final int interval;
-    private final int maxRing;
     private final int offsetX;
     private final int offsetZ;
     private final int delay;
 
-    public Ring(int interval, int maxRing, int offsetX, int offsetZ, int delay) {
+    public Ring(int interval) { this(interval, 0, 0, 0); }
+    public Ring(int interval, int offsetX, int offsetZ) { this(interval, offsetX, offsetZ, 0); }
+    public Ring(int interval, int offsetX, int offsetZ, int delay) {
         this.interval = interval;
-        this.maxRing = maxRing;
         this.offsetX = offsetX;
         this.offsetZ = offsetZ;
         this.delay = delay;
@@ -41,7 +29,9 @@ public final class Ring implements PosFinder {
     public boolean find(BiomeCoreBlockEntity be, PosApplier apply) {
         long tick = BiomeUtil.getTick(be);
         if (tick % interval != 0) return false;
+        int maxRing = be.chunkRadius * 16 + 15;
         int r = (int) (tick / interval) - delay;
+        if (r < 0) return false;
         if (r > maxRing) return true;
         ring(be, r, apply);
         return r == maxRing;
@@ -52,16 +42,17 @@ public final class Ring implements PosFinder {
      */
     private void ring(BiomeCoreBlockEntity be, int r, PosApplier apply) {
         if (r < 0) return;
+        int cr = be.chunkRadius;
         ServerLevel level = (ServerLevel) be.getLevel();
+        assert level != null;
+
         BlockPos base = be.getBlockPos().offset(offsetX, 0, offsetZ);
         int cx = base.getX(), cz = base.getZ();
 
-        int minX = BiomeUtil.minX(base, CHUNK_RADIUS);
-        int maxX = BiomeUtil.maxX(base, CHUNK_RADIUS);
-        int minZ = BiomeUtil.minZ(base, CHUNK_RADIUS);
-        int maxZ = BiomeUtil.maxZ(base, CHUNK_RADIUS);
-        int y0 = Math.max(BiomeUtil.minY(base, CHUNK_RADIUS), level.getMinBuildHeight());
-        int y1 = Math.min(BiomeUtil.maxY(base, CHUNK_RADIUS), level.getMaxBuildHeight() - 1);
+        int minX = BiomeUtil.minX(base, cr), maxX = BiomeUtil.maxX(base, cr);
+        int minZ = BiomeUtil.minZ(base, cr), maxZ = BiomeUtil.maxZ(base, cr);
+        int y0 = Math.max(BiomeUtil.minY(base, cr), level.getMinBuildHeight());
+        int y1 = Math.min(BiomeUtil.maxY(base, cr), level.getMaxBuildHeight() - 1);
 
         if (r == 0) {
             if (cx < minX || cx > maxX || cz < minZ || cz > maxZ) return;

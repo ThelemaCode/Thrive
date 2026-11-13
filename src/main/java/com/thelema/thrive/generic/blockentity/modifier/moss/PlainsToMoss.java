@@ -1,8 +1,8 @@
 package com.thelema.thrive.generic.blockentity.modifier.moss;
 
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
+import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
 import com.thelema.thrive.generic.blockentity.modifier.BiomeTypeChanger;
-import com.thelema.thrive.generic.blockentity.modifier.PhasedModifier;
 import com.thelema.thrive.generic.blockentity.modifier.Ring;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -16,16 +16,17 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Set;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
 
 /**
  * 平原 → Moss 一次性转换。
  * <p>
- * BE 在 plains 启动，REWRITE 把 Ring 内 plains 改成 moss，
- * 后续阶段靠 {@link MossHelper#onlyMoss} 只处理本次转换出的 moss，不碰原版/其他 moss。
+ * 四个 Ring 并行推进，靠 {@code delay} 形成流水线：
+ * REWRITE 无延迟，SURFACE/LAKE/DECO 各落后 {@link #DELAY} 环，
+ * 保证它们走第 r 环时群系已被 REWRITE 改好，{@code onlyMoss} 判断有效。
+ * 全部返回 true 时替换结构收尾。
  */
-public class PlainsToMoss extends PhasedModifier {
+public class PlainsToMoss implements BiomeModifier {
 
     static final ResourceKey<Biome> SOURCE = ResourceKey.create(
             Registries.BIOME, ResourceLocation.withDefaultNamespace("plains"));
@@ -43,37 +44,54 @@ public class PlainsToMoss extends PhasedModifier {
             Blocks.STONE, Blocks.SAND, Blocks.GRAVEL, Blocks.CLAY,
             Blocks.MYCELIUM, Blocks.SNOW_BLOCK);
 
-    private static final BiomeTypeChanger PLAINS_TO_MOSS = BiomeTypeChanger.of(SOURCE, MossHelper.TARGET);
+    private static final BiomeTypeChanger PLAINS_TO_MOSS =
+            BiomeTypeChanger.of(SOURCE, MossHelper.TARGET);
 
-    public PlainsToMoss() {
-        addBS (Ring.TICK_10, PLAINS_TO_MOSS);                                    // REWRITE
-        addPos(Ring.TICK_10, MossHelper.onlyMoss(PlainsToMoss::surface));        // SURFACE
-        addPos(Ring.TICK_20, MossHelper.onlyMoss(MossHelper::lake));             // LAKE
-        addPos(Ring.TICK_10, MossHelper.onlyMoss(MossHelper::deco));             // DECO
-        addFinish(MossHelper.TREE_MOSS);                                          // DONE
-    }
+    /**
+     * 流水线延迟：每个阶段落后上一阶段几环。
+     */
+    private static final int DELAY = 2;
+
+    private static final Ring R_REWRITE = new Ring(10);
+    private static final Ring R_SURFACE = new Ring(10, 0, 0, DELAY);
+    private static final Ring R_LAKE = new Ring(20, 0, 0, DELAY * 2);
+    private static final Ring R_DECO = new Ring(10, 0, 0, DELAY * 3);
 
     @Override
     public boolean canUse(BiomeCoreBlockEntity be) {
-        return be.getLevel().getBiome(be.getBlockPos()).is(SOURCE);
+        return be.getLevel() instanceof ServerLevel sl && sl.getBiome(be.getBlockPos()).is(SOURCE);
+    }
+
+    @Override
+    public boolean tick(BiomeCoreBlockEntity be) {
+        boolean rewrite = forBS(be, R_REWRITE, PLAINS_TO_MOSS);
+        boolean surface = forPos(be, R_SURFACE, MossHelper.onlyMoss(PlainsToMoss::surface));
+        boolean lake = forPos(be, R_LAKE, MossHelper.onlyMoss(MossHelper::lake));
+        boolean deco = forPos(be, R_DECO, MossHelper.onlyMoss(MossHelper::deco));
+
+        boolean all = rewrite & surface & lake & deco;
+        if (all) replaceStructure((ServerLevel) be.getLevel(), be, MossHelper.TREE_MOSS);
+        return all;
     }
 
     // ───── 地表（清原版植物，铺苔藓块） ─────
 
     static void surface(BiomeCoreBlockEntity be, BlockPos p) {
-        ServerLevel level = (ServerLevel) be.getLevel();
-        BlockState s = level.getBlockState(p);
-        if (s.isAir()) return;
-        if (REMOVE.contains(s.getBlock())) {
-            set(level, p, Blocks.AIR.defaultBlockState());
-            markDirty(level, p);
-            return;
-        }
-        if (!REPLACEABLE.contains(s.getBlock())) return;
-        if (level.getBlockState(p.above()).isAir()
-                || level.getBlockState(p.below()).isAir()) {
-            set(level, p, Blocks.MOSS_BLOCK.defaultBlockState());
-            markDirty(level, p);
+        if (be.getLevel() instanceof ServerLevel sl) {
+
+            BlockState s = sl.getBlockState(p);
+            if (s.isAir()) return;
+            if (REMOVE.contains(s.getBlock())) {
+                set(sl, p, Blocks.AIR.defaultBlockState());
+                markDirty(sl, p);
+                return;
+            }
+            if (!REPLACEABLE.contains(s.getBlock())) return;
+            if (sl.getBlockState(p.above()).isAir()
+                    || sl.getBlockState(p.below()).isAir()) {
+                set(sl, p, Blocks.MOSS_BLOCK.defaultBlockState());
+                markDirty(sl, p);
+            }
         }
     }
 }
