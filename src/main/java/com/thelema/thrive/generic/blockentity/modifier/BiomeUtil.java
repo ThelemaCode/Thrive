@@ -191,8 +191,8 @@ public final class BiomeUtil {
     /**
      * 用结构替换 BE，核心对齐，保留地表。
      */
-    public static void replaceStructure(ServerLevel level, BiomeCoreBlockEntity be, ResourceLocation toId) {
-        StructureTemplate to = level.getStructureManager().get(toId).orElse(null);
+    public static void replaceStructure(ServerLevel sl, BiomeCoreBlockEntity be, ResourceLocation toId) {
+        StructureTemplate to = sl.getStructureManager().get(toId).orElse(null);
         if (to == null) return;
         BlockPos corePos = be.getBlockPos();
         BlockPos toCore = findCoreOffset(to);
@@ -201,16 +201,16 @@ public final class BiomeUtil {
 
         be.rotator.clear();   // 材料直接消耗，不保存
 
-        to.placeInWorld(level, toOrigin, toOrigin, new StructurePlaceSettings()
-                        .setRotation(Rotation.NONE).setMirror(Mirror.NONE)
+        to.placeInWorld(sl, toOrigin, toOrigin, new StructurePlaceSettings()
+                        .setRotation(Rotation.getRandom(sl.random)).setMirror(Mirror.NONE)
                         .setIgnoreEntities(false).addProcessor(BlockIgnoreProcessor.AIR),
-                level.random, 50);
+                sl.random, 50);
 
         Vec3i size = to.getSize();
         for (BlockPos p : BlockPos.betweenClosed(toOrigin,
                 toOrigin.offset(size.getX() - 1, size.getY() - 1, size.getZ() - 1))) {
-            level.getLightEngine().checkBlock(p);
-            markDirty(level, p);
+            sl.getLightEngine().checkBlock(p);
+            markDirty(sl, p);
         }
     }
 

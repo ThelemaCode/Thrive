@@ -61,7 +61,7 @@ public class FancySapling extends SaplingBlock {
         BlockPos toOrigin = pos.subtract(offset);
 
         StructurePlaceSettings settings = new StructurePlaceSettings()
-                .setRotation(Rotation.NONE)
+                .setRotation(Rotation.getRandom(level.random))
                 .setMirror(Mirror.NONE)
                 .setIgnoreEntities(false)
                 .addProcessor(BlockIgnoreProcessor.AIR);
