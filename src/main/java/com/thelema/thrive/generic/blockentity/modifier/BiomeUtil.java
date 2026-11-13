@@ -6,7 +6,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -200,28 +199,13 @@ public final class BiomeUtil {
         if (toCore == null) return;
         BlockPos toOrigin = corePos.subtract(toCore);
 
-        // 1. 统一保存 Rotator 的数据
-        CompoundTag capsNbt = new CompoundTag();
-        be.rotator.save(capsNbt, level.registryAccess());
+        be.rotator.clear();   // 材料直接消耗，不保存
 
-        // 2. 清空旧的数据，准备被结构覆盖
-        be.rotator.clear();
-
-        // 3. 放置结构（旧的方块实体会被覆盖并销毁）
         to.placeInWorld(level, toOrigin, toOrigin, new StructurePlaceSettings()
                         .setRotation(Rotation.NONE).setMirror(Mirror.NONE)
                         .setIgnoreEntities(false).addProcessor(BlockIgnoreProcessor.AIR),
                 level.random, 50);
 
-        // 4. 如果新位置依然是核心，把数据重新注入给新的 BE
-        if (level.getBlockEntity(corePos) instanceof BiomeCoreBlockEntity newBe) {
-            newBe.rotator.load(capsNbt, level.registryAccess());
-            newBe.setChanged();
-            // 强制同步给客户端刷新渲染
-            level.sendBlockUpdated(corePos, newBe.getBlockState(), newBe.getBlockState(), 3);
-        }
-
-        // 5. 更新光照和客户端
         Vec3i size = to.getSize();
         for (BlockPos p : BlockPos.betweenClosed(toOrigin,
                 toOrigin.offset(size.getX() - 1, size.getY() - 1, size.getZ() - 1))) {
