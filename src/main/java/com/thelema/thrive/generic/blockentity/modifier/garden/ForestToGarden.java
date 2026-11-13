@@ -15,8 +15,7 @@ public class ForestToGarden extends PhasedModifier {
     static final ResourceKey<Biome> SOURCE = ResourceKey.create(
             Registries.BIOME, ResourceLocation.withDefaultNamespace("forest"));
 
-    private static final BiomeTypeChanger FOREST_TO_GARDEN =
-            new BiomeTypeChanger(SOURCE, GardenHelper.TARGET);
+    private static final BiomeTypeChanger FOREST_TO_GARDEN = BiomeTypeChanger.of(SOURCE, GardenHelper.TARGET);
 
     public ForestToGarden() {
         addPos(Ring.TICK_20, ForestToGarden::clear);     // PREPARE

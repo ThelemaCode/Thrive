@@ -2,6 +2,7 @@ package com.thelema.thrive.mixin;
 
 import com.thelema.thrive.generic.block.LanternBerry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel; // 新增
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -36,12 +37,16 @@ public class FlintAndSteelItemMixin {
 
         // 规则一：目标就是 LanternBerry → 点燃，优先于任何放置
         if (state.getBlock() instanceof LanternBerry) {
-            if (!level.isClientSide) {
-                LanternBerry.ignite(level, pos, player);
-                level.playSound(null, pos, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS,
-                        1.0F, level.random.nextFloat() * 0.4F + 0.8F);
+            if (level instanceof ServerLevel sl) {
+                // 传入 ServerLevel
+                LanternBerry.ignite(sl, pos, player);
+                // 播放音效
+                sl.playSound(null, pos, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS,
+                        1.0F, sl.random.nextFloat() * 0.4F + 0.8F);
+                // 消耗耐久
                 ctx.getItemInHand().hurtAndBreak(1, player, LivingEntity.getSlotForHand(hand));
             }
+            // 双端都需要返回 SUCCESS，避免客户端预测失败导致重复点击
             cir.setReturnValue(InteractionResult.SUCCESS);
             return;
         }

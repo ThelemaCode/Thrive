@@ -22,9 +22,9 @@ public class SkyToCloud extends PhasedModifier {
 
     /** 每批间隔（tick）。20 = 1 秒。 */
     static final int INTERVAL = 20;
-    /** 每批撒几点（= 几朵云）。 */
-    static final int COUNT = 10;
-    /** 共几批。10 × 18 = 180 朵。 */
+    /** 每批撒 20。 */
+    static final int COUNT = 20;
+    /** 共几批。20 × 18 = 360 朵。 */
     static final int PATCH = 18;
 
     /** 撒点 y 偏移范围（含两端）。 */

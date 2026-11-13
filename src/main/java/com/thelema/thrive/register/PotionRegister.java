@@ -111,24 +111,60 @@ public class PotionRegister {
                     new MobEffectInstance(MobEffects.NIGHT_VISION, 38400)));
 
     // ============ 织网 ============
+    public static final DeferredHolder<Potion, Potion> LONG_WEAVING =
+            POTION.register("long_weaving", () -> new Potion("weaving",
+                    new MobEffectInstance(MobEffects.WEAVING, 9600))); // 8min
+    public static final DeferredHolder<Potion, Potion> STRONG_WEAVING =
+            POTION.register("strong_weaving", () -> new Potion("weaving",
+                    new MobEffectInstance(MobEffects.WEAVING, 1800, 1))); // 1.5min II
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_WEAVING =
             POTION.register("super_long_weaving", () -> new Potion("weaving",
-                    new MobEffectInstance(MobEffects.WEAVING, 14400)));
+                    new MobEffectInstance(MobEffects.WEAVING, 38400))); // 32min
+    public static final DeferredHolder<Potion, Potion> SUPER_STRONG_WEAVING =
+            POTION.register("super_strong_weaving", () -> new Potion("weaving",
+                    new MobEffectInstance(MobEffects.WEAVING, 3600, 2))); // 3min III
 
     // ============ 渗浆 ============
+    public static final DeferredHolder<Potion, Potion> LONG_OOZING =
+            POTION.register("long_oozing", () -> new Potion("oozing",
+                    new MobEffectInstance(MobEffects.OOZING, 9600)));
+    public static final DeferredHolder<Potion, Potion> STRONG_OOZING =
+            POTION.register("strong_oozing", () -> new Potion("oozing",
+                    new MobEffectInstance(MobEffects.OOZING, 1800, 1)));
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_OOZING =
             POTION.register("super_long_oozing", () -> new Potion("oozing",
-                    new MobEffectInstance(MobEffects.OOZING, 14400)));
+                    new MobEffectInstance(MobEffects.OOZING, 38400)));
+    public static final DeferredHolder<Potion, Potion> SUPER_STRONG_OOZING =
+            POTION.register("super_strong_oozing", () -> new Potion("oozing",
+                    new MobEffectInstance(MobEffects.OOZING, 3600, 2)));
 
     // ============ 虫蚀 ============
+    public static final DeferredHolder<Potion, Potion> LONG_INFESTED =
+            POTION.register("long_infested", () -> new Potion("infested",
+                    new MobEffectInstance(MobEffects.INFESTED, 9600)));
+    public static final DeferredHolder<Potion, Potion> STRONG_INFESTED =
+            POTION.register("strong_infested", () -> new Potion("infested",
+                    new MobEffectInstance(MobEffects.INFESTED, 1800, 1)));
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_INFESTED =
             POTION.register("super_long_infested", () -> new Potion("infested",
-                    new MobEffectInstance(MobEffects.INFESTED, 14400)));
+                    new MobEffectInstance(MobEffects.INFESTED, 38400)));
+    public static final DeferredHolder<Potion, Potion> SUPER_STRONG_INFESTED =
+            POTION.register("super_strong_infested", () -> new Potion("infested",
+                    new MobEffectInstance(MobEffects.INFESTED, 3600, 2)));
 
     // ============ 蓄风 ============
+    public static final DeferredHolder<Potion, Potion> LONG_WIND_CHARGED =
+            POTION.register("long_wind_charged", () -> new Potion("wind_charged",
+                    new MobEffectInstance(MobEffects.WIND_CHARGED, 9600)));
+    public static final DeferredHolder<Potion, Potion> STRONG_WIND_CHARGED =
+            POTION.register("strong_wind_charged", () -> new Potion("wind_charged",
+                    new MobEffectInstance(MobEffects.WIND_CHARGED, 1800, 1)));
     public static final DeferredHolder<Potion, Potion> SUPER_LONG_WIND_CHARGED =
             POTION.register("super_long_wind_charged", () -> new Potion("wind_charged",
-                    new MobEffectInstance(MobEffects.WIND_CHARGED, 14400)));
+                    new MobEffectInstance(MobEffects.WIND_CHARGED, 38400)));
+    public static final DeferredHolder<Potion, Potion> SUPER_STRONG_WIND_CHARGED =
+            POTION.register("super_strong_wind_charged", () -> new Potion("wind_charged",
+                    new MobEffectInstance(MobEffects.WIND_CHARGED, 1800, 2)));
 
     // ============ 凋零 ============
     public static final DeferredHolder<Potion, Potion> WITHER =
@@ -200,25 +236,42 @@ public class PotionRegister {
     public static void onRegisterBrewingRecipes(RegisterBrewingRecipesEvent event) {
         PotionBrewing.Builder b = event.getBuilder();
 
-        // 白郁金香 → 牛奶
+        // 1. 基础药水链 (粗制 + 物品)
         b.addMix(Potions.AWKWARD, Items.WHITE_TULIP, MILK);
+        b.addMix(Potions.AWKWARD, Items.WITHER_ROSE, WITHER);
+        b.addMix(Potions.AWKWARD, Items.CHORUS_FLOWER, LEVITATION);
+        b.addMix(Potions.AWKWARD, ItemRegister.MOSS_COD.get(), MOSS);
+
+        // 2. 强化链 (基础 + 红石/萤石)
+        longAndStrongRecipe(b);
+
+        // 3. 蜂蜜升级链 (长效/强效 + 蜂蜜)
+        honeyRecipe(b);
+    }
+
+    private static void longAndStrongRecipe(PotionBrewing.Builder b) {
+
         b.addMix(MILK, Items.REDSTONE, LONG_MILK);
 
-        // 凋灵玫瑰 → 凋零
-        b.addMix(Potions.AWKWARD, Items.WITHER_ROSE, WITHER);
         b.addMix(WITHER, Items.REDSTONE, LONG_WITHER);
         b.addMix(WITHER, Items.GLOWSTONE_DUST, STRONG_WITHER);
 
-        // 紫颂花 → 漂浮
-        b.addMix(Potions.AWKWARD, Items.CHORUS_FLOWER, LEVITATION);
         b.addMix(LEVITATION, Items.REDSTONE, LONG_LEVITATION);
 
-        // 苔藓鳕鱼 → 苔藓
-        b.addMix(Potions.AWKWARD, ItemRegister.MOSS_COD.get(), MOSS);
         b.addMix(MOSS, Items.REDSTONE, LONG_MOSS);
 
-        // 蜂蜜升级配方
-        honeyRecipe(b);
+
+        b.addMix(Potions.WEAVING, Items.REDSTONE, LONG_WEAVING);
+        b.addMix(Potions.WEAVING, Items.GLOWSTONE_DUST, STRONG_WEAVING);
+
+        b.addMix(Potions.OOZING, Items.REDSTONE, LONG_OOZING);
+        b.addMix(Potions.OOZING, Items.GLOWSTONE_DUST, STRONG_OOZING);
+
+        b.addMix(Potions.INFESTED, Items.REDSTONE, LONG_INFESTED);
+        b.addMix(Potions.INFESTED, Items.GLOWSTONE_DUST, STRONG_INFESTED);
+
+        b.addMix(Potions.WIND_CHARGED, Items.REDSTONE, LONG_WIND_CHARGED);
+        b.addMix(Potions.WIND_CHARGED, ItemRegister.BREEZE_FISH.get(), STRONG_WIND_CHARGED);
     }
 
     private static void honeyRecipe(PotionBrewing.Builder b) {
@@ -232,7 +285,8 @@ public class PotionRegister {
         b.addMix(Potions.LONG_WATER_BREATHING, ItemRegister.BLUE_ORCHID_HONEY.get(), SUPER_LONG_WATER_BREATHING);
 
         // 4 绒球葱 → 织网
-        b.addMix(Potions.WEAVING, ItemRegister.ALLIUM_HONEY.get(), SUPER_LONG_WEAVING);
+        b.addMix(LONG_WEAVING, ItemRegister.ALLIUM_HONEY.get(), SUPER_LONG_WEAVING);
+        b.addMix(STRONG_WEAVING, ItemRegister.ALLIUM_HONEY.get(), SUPER_STRONG_WEAVING);
 
         // 5 蓝花美耳草 → 隐身
         b.addMix(Potions.LONG_INVISIBILITY, ItemRegister.AZURE_BLUET_HONEY.get(), SUPER_LONG_INVISIBILITY);
@@ -267,16 +321,19 @@ public class PotionRegister {
         b.addMix(STRONG_WITHER, ItemRegister.WITHER_ROSE_HONEY.get(), SUPER_STRONG_WITHER);
 
         // 16 丁香 → 蓄风
-        b.addMix(Potions.WIND_CHARGED, ItemRegister.LILAC_HONEY.get(), SUPER_LONG_WIND_CHARGED);
+        b.addMix(LONG_WIND_CHARGED, ItemRegister.LILAC_HONEY.get(), SUPER_LONG_WIND_CHARGED);
+        b.addMix(STRONG_WIND_CHARGED, ItemRegister.LILAC_HONEY.get(), SUPER_STRONG_WIND_CHARGED);
 
         // 18 玫瑰丛 → 伤害
         b.addMix(Potions.STRONG_HARMING, ItemRegister.ROSE_BUSH_HONEY.get(), SUPER_STRONG_HARMING);
 
         // 19 瓶子草 → 渗浆
-        b.addMix(Potions.OOZING, ItemRegister.PITCHER_PLANT_HONEY.get(), SUPER_LONG_OOZING);
+        b.addMix(LONG_OOZING, ItemRegister.PITCHER_PLANT_HONEY.get(), SUPER_LONG_OOZING);
+        b.addMix(STRONG_OOZING, ItemRegister.PITCHER_PLANT_HONEY.get(), SUPER_STRONG_OOZING);
 
         // 20 盛开杜鹃叶 → 虫蚀
-        b.addMix(Potions.INFESTED, ItemRegister.FLOWERING_AZALEA_LEAVES_HONEY.get(), SUPER_LONG_INFESTED);
+        b.addMix(LONG_INFESTED, ItemRegister.FLOWERING_AZALEA_LEAVES_HONEY.get(), SUPER_LONG_INFESTED);
+        b.addMix(STRONG_INFESTED, ItemRegister.FLOWERING_AZALEA_LEAVES_HONEY.get(), SUPER_STRONG_INFESTED);
 
         // 21 盛开杜鹃 → 跳跃，苔藓
         b.addMix(Potions.LONG_LEAPING, ItemRegister.FLOWERING_AZALEA_HONEY.get(), SUPER_LONG_LEAPING);

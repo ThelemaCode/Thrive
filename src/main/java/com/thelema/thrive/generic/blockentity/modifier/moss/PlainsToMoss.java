@@ -43,8 +43,7 @@ public class PlainsToMoss extends PhasedModifier {
             Blocks.STONE, Blocks.SAND, Blocks.GRAVEL, Blocks.CLAY,
             Blocks.MYCELIUM, Blocks.SNOW_BLOCK);
 
-    private static final BiomeTypeChanger PLAINS_TO_MOSS =
-            new BiomeTypeChanger(SOURCE, MossHelper.TARGET);
+    private static final BiomeTypeChanger PLAINS_TO_MOSS = BiomeTypeChanger.of(SOURCE, MossHelper.TARGET);
 
     public PlainsToMoss() {
         addBS (Ring.TICK_10, PLAINS_TO_MOSS);                                    // REWRITE

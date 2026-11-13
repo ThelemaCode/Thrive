@@ -5,7 +5,7 @@ import net.minecraft.client.particle.HugeExplosionParticle;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.particles.ColorParticleOption;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
@@ -15,11 +15,10 @@ public class ColoredExplosionParticle extends HugeExplosionParticle {
     public ColoredExplosionParticle(ClientLevel level, double x, double y, double z,
                                     double quadSizeMultiplier, SpriteSet spriteSet,
                                     float r, float g, float b) {
-        // HugeExplosionParticle 把 xSpeed 当作大小乘数
+        // HugeExplosionParticle 把 quadSizeMultiplier 当作大小缩放
         super(level, x, y, z, quadSizeMultiplier, spriteSet);
 
-        // 原版 HugeExplosionParticle 在 super() 里已经给 rCol/gCol/bCol 赋了随机灰度值 (0.4 ~ 1.0)
-        // 我们直接拿它当亮度乘数
+        // 原版 super() 里给了随机的灰度亮度
         float brightness = this.rCol;
 
         // 目标颜色 × 随机亮度
@@ -27,12 +26,18 @@ public class ColoredExplosionParticle extends HugeExplosionParticle {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public record Provider(SpriteSet spriteSet, float r, float g, float b) implements ParticleProvider<SimpleParticleType> {
+    public record Provider(SpriteSet spriteSet) implements ParticleProvider<ColorParticleOption> {
         @Override
-        public Particle createParticle(SimpleParticleType type, ClientLevel level,
+        public Particle createParticle(ColorParticleOption type, ClientLevel level,
                                        double x, double y, double z,
                                        double xSpeed, double ySpeed, double zSpeed) {
-            // 注意：原版把 xSpeed 传给了 quadSizeMultiplier
+
+            // 解包颜色
+            float r = type.getRed();
+            float g = type.getGreen();
+            float b = type.getBlue();
+
+            // 【修复】删掉 ySpeed 和 zSpeed，把 xSpeed 传给了大小乘数
             return new ColoredExplosionParticle(level, x, y, z, xSpeed, spriteSet, r, g, b);
         }
     }

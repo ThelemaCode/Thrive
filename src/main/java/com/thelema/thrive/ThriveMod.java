@@ -1,7 +1,7 @@
 package com.thelema.thrive;
 
 import com.mojang.logging.LogUtils;
-import com.thelema.thrive.config.TConfig;
+import com.thelema.thrive.config.ThriveConfig;
 import com.thelema.thrive.register.*;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.IEventBus;
@@ -44,7 +44,7 @@ public class ThriveMod {
 
 
 
-        cont.registerConfig(ModConfig.Type.COMMON, TConfig.SPEC);
+        cont.registerConfig(ModConfig.Type.COMMON, ThriveConfig.SPEC);
     }
 
     static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();

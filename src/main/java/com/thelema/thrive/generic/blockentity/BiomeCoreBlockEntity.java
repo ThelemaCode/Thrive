@@ -6,11 +6,15 @@ import com.thelema.thrive.generic.blockentity.modifier.BiomeModifierRegistry;
 import com.thelema.thrive.register.BlockEntityRegister;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -100,8 +104,38 @@ public class BiomeCoreBlockEntity extends BlockEntity {
 
         // 1. 转换中
         if (be.activeBiomeModifierId != null) {
+            // 【特效】运行中的符文环绕粒子
+            if (level instanceof ServerLevel serverLevel) {
+                // 每 3 tick 生成一次，避免太密集卡顿
+                if (level.getGameTime() % 3 == 0) {
+                    double centerX = pos.getX() + 0.5;
+                    double centerY = pos.getY() + be.rotator.oy;
+                    double centerZ = pos.getZ() + 0.5;
+
+                    // 随机绕圈角度
+                    double angle = level.random.nextDouble() * Math.PI * 2;
+                    double radius = 0.4 + level.random.nextDouble() * 0.4; // 半径 0.4~0.8
+                    double px = centerX + Math.cos(angle) * radius;
+                    double pz = centerZ + Math.sin(angle) * radius;
+
+                    // 生成原版附魔台符文粒子 (ENCHANT)，让它在垂直方向轻微飘散
+                    serverLevel.sendParticles(ParticleTypes.ENCHANT,
+                            px, centerY - 0.2, pz,
+                            1, 0.0, 0.5, 0.0, 0.5);
+                }
+            }
+
             BiomeModifier c = BiomeModifierRegistry.get(be.activeBiomeModifierId);
             if (c != null && runTick(c, be)) {
+                // 【特效】转换完成时的爆发
+                if (level instanceof ServerLevel serverLevel) {
+                    // 生成一圈绿色开心粒子
+                    serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                            pos.getX() + 0.5, pos.getY() + be.rotator.oy, pos.getZ() + 0.5,
+                            20, 0.5, 0.5, 0.5, 0.1);
+                    // 播放紫水晶清脆的完成音效
+                    level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.BLOCKS, 1.0f, 1.0f);
+                }
                 be.resetConversion();
             }
             return;
@@ -109,9 +143,11 @@ public class BiomeCoreBlockEntity extends BlockEntity {
 
         // 2. 空闲，检查倒计时归零
         if (be.checkTimer > 0 && --be.checkTimer == 0) {
+            // 尝试启动转化
             be.tryStartConversion();
         }
     }
+
 
     /**
      * 查表并启动转换。

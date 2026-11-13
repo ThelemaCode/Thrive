@@ -24,9 +24,8 @@ public class EntityRenderRegister {
         e.registerEntityRenderer(EntityRegister.GARDEN_WITCH.get(), GardenWitchRenderer::new);
         e.registerEntityRenderer(EntityRegister.GARDEN_PILLAGER.get(), GardenPillagerRenderer::new);
         e.registerEntityRenderer(EntityRegister.SUN.get(), SunRenderer::new);
-        e.registerEntityRenderer(EntityRegister.BREEZE_CORE.get(), BreezeCoreRenderer::new);
-        e.registerEntityRenderer(EntityRegister.FISHING_AREA.get(), NoopRenderer::new);
-
+        e.registerEntityRenderer(EntityRegister.VORTEX_BREEZE.get(), BreezeCoreRenderer::new);
+        e.registerEntityRenderer(EntityRegister.BAIT_AREA.get(), NoopRenderer::new);
     }
 
     @SubscribeEvent

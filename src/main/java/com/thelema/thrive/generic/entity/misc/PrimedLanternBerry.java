@@ -1,11 +1,11 @@
 package com.thelema.thrive.generic.entity.misc;
 
-import com.thelema.thrive.generic.block.LanternBerry;
 import com.thelema.thrive.generic.tool.Damage;
 import com.thelema.thrive.generic.tool.Knockback;
 import com.thelema.thrive.register.EntityRegister;
 import com.thelema.thrive.register.ParticleRegister;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -32,18 +32,18 @@ public class PrimedLanternBerry extends Entity implements TraceableEntity {
 
     public PrimedLanternBerry(EntityType<? extends PrimedLanternBerry> entityType, Level level) {
         super(entityType, level);
-        this.blocksBuilding = true;
+        blocksBuilding = true;
     }
 
     public PrimedLanternBerry(Level level, double x, double y, double z, @Nullable LivingEntity owner) {
         this(EntityRegister.PRIMED_LANTERN_BERRY.get(), level);
-        this.setPos(x, y, z);
+        setPos(x, y, z);
         double d0 = level.random.nextDouble() * Math.PI * 2;
-        this.setDeltaMovement(-Math.sin(d0) * 0.02, 0.2, -Math.cos(d0) * 0.02);
-        this.setFuse(DEFAULT_FUSE_TIME);
-        this.xo = x;
-        this.yo = y;
-        this.zo = z;
+        setDeltaMovement(-Math.sin(d0) * 0.02, 0.2, -Math.cos(d0) * 0.02);
+        setFuse(DEFAULT_FUSE_TIME);
+        xo = x;
+        yo = y;
+        zo = z;
         this.owner = owner;
     }
 
@@ -59,7 +59,7 @@ public class PrimedLanternBerry extends Entity implements TraceableEntity {
 
     @Override
     public boolean isPickable() {
-        return !this.isRemoved();
+        return !isRemoved();
     }
 
     @Override
@@ -69,46 +69,46 @@ public class PrimedLanternBerry extends Entity implements TraceableEntity {
 
     @Override
     public void tick() {
-        this.applyGravity();
-        this.move(MoverType.SELF, this.getDeltaMovement());
-        this.setDeltaMovement(this.getDeltaMovement().scale(0.98));
-        if (this.onGround()) {
-            this.setDeltaMovement(this.getDeltaMovement().multiply(0.7, -0.5, 0.7));
+        applyGravity();
+        move(MoverType.SELF, getDeltaMovement());
+        setDeltaMovement(getDeltaMovement().scale(0.98));
+        if (onGround()) {
+            setDeltaMovement(getDeltaMovement().multiply(0.7, -0.5, 0.7));
         }
 
-        int i = this.getFuse() - 1;
-        this.setFuse(i);
+        int i = getFuse() - 1;
+        setFuse(i);
         if (i <= 0) {
-            if (!this.level().isClientSide) {
-                deflagrate(level(),this.blockPosition(), null, this, 20.0F);
+            if (level() instanceof ServerLevel sl) {
+                deflagrate(sl, blockPosition(), null, this, 20.0F);
             }
-            this.discard();
+            discard();
         } else {
-            this.updateInWaterStateAndDoFluidPushing();
+            updateInWaterStateAndDoFluidPushing();
         }
     }
 
     public static void deflagrate(Level level, BlockPos pos, @Nullable LivingEntity owner, @Nullable Entity excludeEntity, float damage) {
-
-        for (BlockPos blockPos : BlockPos.betweenClosed(pos.offset(-4, -4, -4), pos.offset(4, 4, 4))) {
-            BlockState state = level.getBlockState(blockPos);
-            if (state.getBlock() instanceof LanternBerry) {
-                LanternBerry.ignite(level, blockPos, owner);
-                level.removeBlock(blockPos, false);
-            }
-        }
-
+        // 服务端
         if (level instanceof ServerLevel sl) {
+
+            // 点燃周围
+            for (BlockPos b : BlockPos.betweenClosed(pos.offset(-4, -4, -4), pos.offset(4, 4, 4))) {
+                BlockState state = level.getBlockState(b);
+                state.onCaughtFire(sl, b, null, null);
+            }
+
             double cx = pos.getX() + 0.5;
             double cy = pos.getY() + 0.5;
             double cz = pos.getZ() + 0.5;
 
-            sl.playSound(null,pos, SoundEvents.BLAZE_SHOOT, SoundSource.HOSTILE, 3.0F, 0.8F);
+            sl.playSound(null, pos, SoundEvents.BLAZE_SHOOT, SoundSource.HOSTILE, 3.0F, 0.8F);
             sl.playSound(null, pos, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 3.0F, 0.8F);
 
 
             sl.sendParticles(
-                    ParticleRegister.JUICE_EXPLOSION_EMITTER.get(),
+                    // 【核心修改】用 ColorParticleOption 包装目标粒子类型和火焰色
+                    ColorParticleOption.create(ParticleRegister.COLORED_EXPLOSION_EMITTER.get(), 0xFFA525),
                     cx, cy, cz,
                     1,              // 只发 1 颗发射器
                     0.0, 0.0, 0.0,  // 无偏移
@@ -123,44 +123,46 @@ public class PrimedLanternBerry extends Entity implements TraceableEntity {
                     pos.getX() + 5.5, pos.getY() + 5.5, pos.getZ() + 5.5
             );
 
+            // 伤害 Living并点燃
             sl.getEntitiesOfClass(LivingEntity.class, area).forEach(entity -> {
                 if (entity == excludeEntity) return;
                 Damage.hurt(entity, DamageTypes.ON_FIRE, damage);
                 entity.setRemainingFireTicks(entity.getRemainingFireTicks() + 200);
             });
 
-            Knockback.point(sl, pos.getCenter(), 1.5f, 1.0f, e -> true);
+            // 击退
+            Knockback.push(sl, pos.getCenter(), 1.5f, 1.0f, e -> true);
         }
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag compound) {
-        compound.putShort(TAG_FUSE, (short) this.getFuse());
+        compound.putShort(TAG_FUSE, (short) getFuse());
     }
 
     @Override
     protected void readAdditionalSaveData(CompoundTag compound) {
-        this.setFuse(compound.getShort(TAG_FUSE));
+        setFuse(compound.getShort(TAG_FUSE));
     }
 
     @Nullable
     public LivingEntity getOwner() {
-        return this.owner;
+        return owner;
     }
 
     @Override
     public void restoreFrom(Entity entity) {
         super.restoreFrom(entity);
         if (entity instanceof PrimedLanternBerry berry) {
-            this.owner = berry.owner;
+            owner = berry.owner;
         }
     }
 
     public void setFuse(int fuse) {
-        this.entityData.set(DATA_FUSE_ID, fuse);
+        entityData.set(DATA_FUSE_ID, fuse);
     }
 
     public int getFuse() {
-        return this.entityData.get(DATA_FUSE_ID);
+        return entityData.get(DATA_FUSE_ID);
     }
 }

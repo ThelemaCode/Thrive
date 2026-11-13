@@ -21,10 +21,10 @@ public class FluidClientRegister {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            ItemBlockRenderTypes.setRenderLayer(
-                    FluidRegister.LANTERN_BERRY_JUICE_STILL.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(
-                    FluidRegister.LANTERN_BERRY_JUICE_FLOWING.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(FluidRegister.LANTERN_BERRY_JUICE_STILL.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(FluidRegister.LANTERN_BERRY_JUICE_FLOWING.get(), RenderType.translucent());
+            //ItemBlockRenderTypes.setRenderLayer(FluidRegister.SKY_WATER_STILL.get(), RenderType.translucent());
+            //ItemBlockRenderTypes.setRenderLayer(FluidRegister.SKY_WATER_FLOWING.get(), RenderType.translucent());
         });
     }
 
@@ -58,5 +58,35 @@ public class FluidClientRegister {
             }
 
         }, FluidRegister.LANTERN_BERRY_JUICE_TYPE.get());
+
+        event.registerFluidType(new IClientFluidTypeExtensions() {
+            @Override
+            public ResourceLocation getStillTexture() {
+                // 先用水贴图确保能跑
+                return ResourceLocation.withDefaultNamespace("block/water_still");
+            }
+            @Override
+            public ResourceLocation getFlowingTexture() {
+                return ResourceLocation.withDefaultNamespace("block/water_flow");
+            }
+            @Override
+            public int getTintColor() {
+                // 0xFF 00BFFF 明亮天蓝色 (DeepSkyBlue)
+                return 0xFF00BFFF;
+            }
+            @Override
+            public void modifyFogRender(Camera camera, FogRenderer.FogMode mode, float renderDistance,
+                                        float partialTick, float nearDistance, float farDistance, FogShape shape) {
+                if (mode != FogRenderer.FogMode.FOG_TERRAIN) return;
+
+                // 亮色淡蓝色雾气 (RGB: 0.5, 0.8, 1.0)
+                RenderSystem.setShaderFogColor(0.5F, 0.8F, 1.0F, 1.0F);
+
+                // 雾距离：越近越"浓"
+                RenderSystem.setShaderFogStart(0.5F);
+                RenderSystem.setShaderFogEnd(6.0F);
+            }
+
+        }, FluidRegister.SKY_WATER_TYPE.get());
     }
 }

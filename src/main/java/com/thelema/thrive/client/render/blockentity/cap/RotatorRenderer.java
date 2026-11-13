@@ -20,7 +20,6 @@ public class RotatorRenderer {
         if (rotator.isEmpty()) return;
 
         Level level = rotator.owner.getLevel();
-        int renderLight = 0xF000F0; // 全亮，防止黑块
 
         double time = (level != null ? level.getGameTime() : 0) + partialTicks;
 
@@ -73,7 +72,7 @@ public class RotatorRenderer {
             ms.scale(SCALE, SCALE, SCALE);
 
             // 5. 渲染
-            itemRenderer.renderStatic(stack, ItemDisplayContext.FIXED, renderLight, overlay, ms, buffer, level, 0);
+            itemRenderer.renderStatic(stack, ItemDisplayContext.FIXED, light, overlay, ms, buffer, level, 0);
 
             ms.popPose();
         }

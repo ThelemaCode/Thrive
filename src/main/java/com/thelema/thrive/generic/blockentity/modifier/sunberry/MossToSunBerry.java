@@ -47,8 +47,7 @@ public class MossToSunBerry extends PhasedModifier {
     /** 湖列 → 挖洞前的 topY。phase 3 写、phase 4 读。 */
     private final Map<Long, Integer> lakeTop = new HashMap<>();
 
-    private static final BiomeTypeChanger MOSS_TO_SUN_BERRY =
-            new BiomeTypeChanger(SOURCE, TARGET);
+    private static final BiomeTypeChanger MOSS_TO_SUN_BERRY = BiomeTypeChanger.of(SOURCE, TARGET);
 
     public MossToSunBerry() {
         addBS(Ring.TICK_20, MOSS_TO_SUN_BERRY);             // REWRITE

@@ -1,10 +1,7 @@
 package com.thelema.thrive.register;
 
 import com.thelema.thrive.ThriveMod;
-import com.thelema.thrive.generic.entity.misc.FishingArea;
-import com.thelema.thrive.generic.entity.misc.PrimedLanternBerry;
-import com.thelema.thrive.generic.entity.misc.PrimedSunBerry;
-import com.thelema.thrive.generic.entity.misc.Sun;
+import com.thelema.thrive.generic.entity.misc.*;
 import com.thelema.thrive.generic.entity.mob.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -33,85 +30,79 @@ public class EntityRegister {
     static final DeferredRegister<EntityType<?>> ENTITIES =
             DeferredRegister.create(Registries.ENTITY_TYPE, ThriveMod.MOD_ID);
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MossyZombie>> MOSSY_ZOMBIE =
+            ENTITIES.register("mossy_zombie", () -> EntityType.Builder.of(MossyZombie::new, MobCategory.MONSTER)
+                    .sized(0.6f, 1.8f)
+                    .build("mossy_zombie"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<PrimedLanternBerry>> PRIMED_LANTERN_BERRY =
+            ENTITIES.register("primed_lantern_berry", () -> EntityType.Builder.<PrimedLanternBerry>of(PrimedLanternBerry::new, MobCategory.MISC)
+                    .fireImmune()
+                    .sized(0.98F, 0.98F)
+                    .eyeHeight(0.15F)
+                    .clientTrackingRange(10)
+                    .build("primed_lantern_berry"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<LanternBerryCreeper>> LANTERN_BERRY_CREEPER =
+            ENTITIES.register("lantern_berry_creeper", () -> EntityType.Builder.of(LanternBerryCreeper::new, MobCategory.MONSTER)
+                    .sized(1.50f, 0.98f)
+                    .build("lantern_berry_creeper"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<GardenBee>> GARDEN_BEE =
+            ENTITIES.register("garden_bee", () -> EntityType.Builder.of(GardenBee::new, MobCategory.CREATURE)
+                    .sized(0.7f, 0.6f)
+                    .build("garden_bee"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<GardenPillager>> GARDEN_PILLAGER =
+            ENTITIES.register("garden_pillager", () -> EntityType.Builder
+                    .of(GardenPillager::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F)
+                    .clientTrackingRange(8)
+                    .build("garden_pillager"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<PrimedSunBerry>> PRIMED_SUN_BERRY =
+            ENTITIES.register("primed_sun_berry", () -> EntityType.Builder
+                    .<PrimedSunBerry>of(PrimedSunBerry::new, MobCategory.MISC)
+                    .sized(3.0f, 3.0f)
+                    .fireImmune()
+                    .clientTrackingRange(16)
+                    .updateInterval(1)
+                    .build("primed_sun_berry"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<Sun>> SUN =
+            ENTITIES.register("sun", () -> EntityType.Builder
+                    .of(Sun::new, MobCategory.MISC)
+                    .sized(5.0f, 5.0f)
+                    .fireImmune()
+                    .clientTrackingRange(32)
+                    .updateInterval(1)
+                    .build("sun"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<GardenWitch>> GARDEN_WITCH =
+            ENTITIES.register("garden_witch", () -> EntityType.Builder
+                    .of(GardenWitch::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F)
+                    .clientTrackingRange(8)
+                    .build("garden_witch"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<VortexBreeze>> VORTEX_BREEZE =
+            ENTITIES.register("vortex_breeze", () -> EntityType.Builder
+                    .of(VortexBreeze::new, MobCategory.CREATURE)
+                    .sized(1.0f, 1.0f)
+                    .build("vortex_breeze"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<BaitArea>> BAIT_AREA =
+            ENTITIES.register("bait_area", () -> EntityType.Builder
+                    .of(BaitArea::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .build("bait_area"));
+
     public static void register(IEventBus bus) {
         ENTITIES.register(bus);
     }
 
-    public static final DeferredHolder<EntityType<?>, EntityType<MossyZombie>> MOSSY_ZOMBIE;
-    public static final DeferredHolder<EntityType<?>, EntityType<PrimedLanternBerry>> PRIMED_LANTERN_BERRY;
-    public static final DeferredHolder<EntityType<?>, EntityType<LanternBerryCreeper>> LANTERN_BERRY_CREEPER;
-    public static final DeferredHolder<EntityType<?>, EntityType<GardenBee>> GARDEN_BEE;
-    public static final DeferredHolder<EntityType<?>, EntityType<GardenPillager>> GARDEN_PILLAGER;
-    public static final DeferredHolder<EntityType<?>, EntityType<PrimedSunBerry>> PRIMED_SUN_BERRY;
-    public static final DeferredHolder<EntityType<?>, EntityType<Sun>> SUN;
-    public static final DeferredHolder<EntityType<?>, EntityType<GardenWitch>> GARDEN_WITCH;
-    public static final DeferredHolder<EntityType<?>, EntityType<BreezeCore>> BREEZE_CORE;
-    public static final DeferredHolder<EntityType<?>, EntityType<FishingArea>> FISHING_AREA;
-
-    static {
-        MOSSY_ZOMBIE = ENTITIES.register("mossy_zombie", () -> EntityType.Builder.of(MossyZombie::new, MobCategory.MONSTER)
-                .sized(0.6f, 1.8f)
-                .build("mossy_zombie"));
-
-        PRIMED_LANTERN_BERRY = ENTITIES.register("primed_lantern_berry", () -> EntityType.Builder.<PrimedLanternBerry>of(PrimedLanternBerry::new, MobCategory.MISC)
-                .fireImmune()
-                .sized(0.98F, 0.98F)
-                .eyeHeight(0.15F)
-                .clientTrackingRange(10)
-                .build("primed_lantern_berry"));
-
-        LANTERN_BERRY_CREEPER = ENTITIES.register("lantern_berry_creeper", () -> EntityType.Builder.of(LanternBerryCreeper::new, MobCategory.MONSTER)
-                .sized(1.50f, 0.98f)
-                .build("lantern_berry_creeper"));
-
-        GARDEN_BEE = ENTITIES.register("garden_bee", () -> EntityType.Builder.of(GardenBee::new, MobCategory.CREATURE)
-                .sized(0.7f, 0.6f)
-                .build("garden_bee"));
-
-
-        GARDEN_PILLAGER = ENTITIES.register("garden_pillager", () -> EntityType.Builder
-                .of(GardenPillager::new, MobCategory.MONSTER)
-                .sized(0.6F, 1.95F)
-                .clientTrackingRange(8)
-                .build("garden_pillager"));
-
-        PRIMED_SUN_BERRY = ENTITIES.register("primed_sun_berry", () -> EntityType.Builder
-                .<PrimedSunBerry>of(PrimedSunBerry::new, MobCategory.MISC)
-                .sized(3.0f, 3.0f)
-                .fireImmune()
-                .clientTrackingRange(16)
-                .updateInterval(1)
-                .build("primed_sun_berry"));
-
-        SUN = ENTITIES.register("sun", () -> EntityType.Builder
-                .of(Sun::new, MobCategory.MISC)
-                .sized(5.0f, 5.0f)
-                .fireImmune()
-                .clientTrackingRange(32)
-                .updateInterval(1)
-                .build("sun"));
-
-        GARDEN_WITCH = ENTITIES.register("garden_witch", () -> EntityType.Builder
-                .of(GardenWitch::new, MobCategory.MONSTER)
-                .sized(0.6F, 1.95F)
-                .clientTrackingRange(8)
-                .build("garden_witch"));
-
-        BREEZE_CORE = ENTITIES.register("breeze_core", () -> EntityType.Builder
-                .of(BreezeCore::new, MobCategory.CREATURE)
-                .sized(1.0f, 1.0f)
-                .fireImmune()
-                .build("breeze_core"));
-
-        FISHING_AREA = ENTITIES.register("fishing_area", () -> EntityType.Builder
-                .of(FishingArea::new, MobCategory.MISC)
-                .sized(1.0F, 1.0F)             // 碰撞箱大小
-                .clientTrackingRange(10)       // 客户端追踪范围（因为它不可见，给个基础值即可）
-                .build("fishing_area"));
-
-    }
-
     // ========== 事件注册 ==========
+
     @SubscribeEvent
     public static void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(MOSSY_ZOMBIE.get(), MossyZombie.createAttributes().build());
@@ -119,7 +110,7 @@ public class EntityRegister {
         event.put(GARDEN_BEE.get(), GardenBee.createAttributes().build());
         event.put(GARDEN_PILLAGER.get(), GardenPillager.createAttributes().build());
         event.put(GARDEN_WITCH.get(), GardenWitch.createAttributes().build());
-        event.put(BREEZE_CORE.get(), BreezeCore.createAttributes().build());
+        event.put(VORTEX_BREEZE.get(), VortexBreeze.createAttributes().build());
     }
 
     @SubscribeEvent
@@ -128,7 +119,7 @@ public class EntityRegister {
         event.register(LANTERN_BERRY_CREEPER.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
         event.register(GARDEN_PILLAGER.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
         event.register(GARDEN_WITCH.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
-        event.register(BREEZE_CORE.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mob::checkMobSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        event.register(VORTEX_BREEZE.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mob::checkMobSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
     }
 
     // 允许一些生物生成在草丛，地毯这些地方

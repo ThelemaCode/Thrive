@@ -4,19 +4,25 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.HugeExplosionSeedParticle;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.core.particles.ParticleType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class ExplosionEmitterParticle extends HugeExplosionSeedParticle {
 
-    private final ParticleOptions particleToSpawn;
+    private final ParticleType<ColorParticleOption> particleToSpawn;
+    // 【修改 1】存储三个 float 颜色
+    private final float r, g, b;
 
-    protected ExplosionEmitterParticle(ClientLevel level, double x, double y, double z, ParticleOptions particleToSpawn) {
+    protected ExplosionEmitterParticle(ClientLevel level, double x, double y, double z,
+                                       ParticleType<ColorParticleOption> particleToSpawn, float r, float g, float b) {
         super(level, x, y, z);
         this.particleToSpawn = particleToSpawn;
+        this.r = r;
+        this.g = g;
+        this.b = b;
     }
 
     @Override
@@ -25,12 +31,12 @@ public class ExplosionEmitterParticle extends HugeExplosionSeedParticle {
             double d0 = this.x + (this.random.nextDouble() - this.random.nextDouble()) * 4.0;
             double d1 = this.y + (this.random.nextDouble() - this.random.nextDouble()) * 4.0;
             double d2 = this.z + (this.random.nextDouble() - this.random.nextDouble()) * 4.0;
-            
-            // 使用传入的粒子类型
+
+            // 【修改 2】使用 float 创建 ColorParticleOption
             this.level.addParticle(
-                    this.particleToSpawn, 
+                    ColorParticleOption.create(this.particleToSpawn, this.r, this.g, this.b),
                     d0, d1, d2,
-                    (float)this.age / (float)this.lifetime, 0.0, 0.0
+                    0.0, 0.0, 0.0
             );
         }
 
@@ -41,12 +47,13 @@ public class ExplosionEmitterParticle extends HugeExplosionSeedParticle {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public record Provider(ParticleOptions particleToSpawn) implements ParticleProvider<SimpleParticleType> {
+    public record Provider(ParticleType<ColorParticleOption> particleToSpawn) implements ParticleProvider<ColorParticleOption> {
         @Override
-        public Particle createParticle(SimpleParticleType type, ClientLevel level,
+        public Particle createParticle(ColorParticleOption type, ClientLevel level,
                                        double x, double y, double z,
                                        double xSpeed, double ySpeed, double zSpeed) {
-            return new ExplosionEmitterParticle(level, x, y, z, particleToSpawn);
+            // 【修改 3】提取 float 颜色
+            return new ExplosionEmitterParticle(level, x, y, z, particleToSpawn, type.getRed(), type.getGreen(), type.getBlue());
         }
     }
 }

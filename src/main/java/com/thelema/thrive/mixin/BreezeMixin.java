@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Breeze.class)
-public class BreezeDeflectionMixin {
+public class BreezeMixin {
 
     @Inject(method = "deflection", at = @At("HEAD"), cancellable = true)
     private void thrive$deflection(Projectile projectile, CallbackInfoReturnable<ProjectileDeflection> cir) {

@@ -1,12 +1,12 @@
 package com.thelema.thrive.generic.item;
 
-import com.thelema.thrive.generic.entity.misc.FishingArea;
+import com.thelema.thrive.generic.entity.misc.BaitArea;
 import com.thelema.thrive.register.EntityRegister;
 import com.thelema.thrive.register.FluidRegister;
+import com.thelema.thrive.register.ItemRegister;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -27,7 +27,6 @@ public class RampantMoss extends Item {
         super(new Properties());
     }
 
-    // 针对深水区/直接点水面的情况
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
@@ -44,8 +43,8 @@ public class RampantMoss extends Item {
 
         // 判定是否是果汁流体
         if (fs.getFluidType() == FluidRegister.LANTERN_BERRY_JUICE_TYPE.get()) {
-            if (!level.isClientSide) {
-                spawnFishingArea(level, pos, player);
+            if (level instanceof ServerLevel serverLevel) {
+                spawnBaitArea(serverLevel, pos, player);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -56,12 +55,16 @@ public class RampantMoss extends Item {
         return InteractionResultHolder.pass(stack);
     }
 
-    private void spawnFishingArea(Level level, BlockPos pos, Player player) {
-        FishingArea area = new FishingArea(EntityRegister.FISHING_AREA.get(), level);
+    private void spawnBaitArea(ServerLevel level, BlockPos pos, Player player) {
+        // 使用你更新后的实体注册名
+        BaitArea area = new BaitArea(EntityRegister.BAIT_AREA.get(), level);
         area.moveTo(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 0.0F, 0.0F);
 
-        area.lootTable = ResourceKey.create(Registries.LOOT_TABLE,
-                ResourceLocation.fromNamespaceAndPath("thrive", "fishing/lantern_berry_juice"));
+        // 【核心更新】设置鱼饵的 ID，取代原来的 lootTable
+        // 这里假设该物品打窝放出的诱饵是“苔藓鳕鱼”，如果不是请替换为对应的物品
+        area.baitItemId = BuiltInRegistries.ITEM.getKey(ItemRegister.RAMPANT_MOSS.get());
+
+        // 或者直接使用当前手持物品的 ID：area.baitItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
 
         level.addFreshEntity(area);
         level.playSound(null, pos, SoundEvents.MOSS_CARPET_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);

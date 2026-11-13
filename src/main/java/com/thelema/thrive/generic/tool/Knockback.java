@@ -1,6 +1,5 @@
 package com.thelema.thrive.generic.tool;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
@@ -9,20 +8,13 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.function.Function;
 
-
 public class Knockback {
 
     /**
-     * 对以给定点为中心、半径内的实体施加爆炸式击退（无伤害）。
-     * @param level     服务端世界
-     * @param center    击退源中心（爆炸点）
-     * @param radius    影响半径
-     * @param strength  基础击退强度（距离中心越近越强）
-     * @param predicate 额外筛选条件（返回 true 才被击退）
-     * @return 被击退的实体列表
+     * 对以给定点为中心、半径内的实体施加爆炸式击退（向外推）。
      */
-    public static List<Entity> point(ServerLevel level, Vec3 center, double radius, double strength,
-                                     Function<Entity, Boolean> predicate) {
+    public static List<Entity> push(ServerLevel level, Vec3 center, double radius, double strength,
+                                    Function<Entity, Boolean> predicate) {
         AABB aabb = new AABB(center.x - radius, center.y - radius, center.z - radius,
                 center.x + radius, center.y + radius, center.z + radius);
         List<Entity> entities = level.getEntitiesOfClass(Entity.class, aabb,
@@ -46,18 +38,35 @@ public class Knockback {
     }
 
     /**
-     * 简化版本：仅使用 BlockPos 作为中心，默认半径 4.0，强度 1.2，不筛选任何实体。
+     * 对以给定点为中心、半径内的实体施加一次逆向牵引（向内拉）。
      */
-    public static List<Entity> point(ServerLevel level, Vec3 center) {
-        return point(level, center, 4.0, 1.2, e -> true);
-    }
+    public static List<Entity> pull(ServerLevel level, Vec3 center, double radius, double strength,
+                                    Function<Entity, Boolean> predicate) {
+        AABB aabb = new AABB(center.x - radius, center.y - radius, center.z - radius,
+                center.x + radius, center.y + radius, center.z + radius);
+        List<Entity> entities = level.getEntitiesOfClass(Entity.class, aabb,
+                e -> e.isAlive() && predicate.apply(e));
 
-    /**
-     * 使用 BlockPos 作为中心（取方块中心 +0.5）。
-     */
-    public static List<Entity> point(ServerLevel level, BlockPos pos, double radius, double strength,
-                                     Function<Entity, Boolean> predicate) {
-        return point(level, new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5),
-                radius, strength, predicate);
+        for (Entity entity : entities) {
+            // 向量从实体指向中心，产生吸力
+            double dx = center.x - entity.getX();
+            double dy = center.y - entity.getY();
+            double dz = center.z - entity.getZ();
+            double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            // 距离太近的忽略，防止直接重合导致速度爆表
+            if (distance < 0.1) continue;
+
+            // 距离越近，吸力越强
+            double factor = Math.max(0, strength * (1.0 - distance / radius));
+            dx /= distance;
+            dy /= distance;
+            dz /= distance;
+
+            // 添加轻微垂直分量，让被吸过来的实体有个抛物线
+            entity.setDeltaMovement(entity.getDeltaMovement().add(dx * factor, dy * factor + 0.1, dz * factor));
+            entity.hurtMarked = true;
+        }
+        return entities;
     }
 }

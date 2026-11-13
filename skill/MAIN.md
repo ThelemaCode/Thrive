@@ -16,56 +16,21 @@
 - **封装要有价值**：易于理解 + 复用度高 + 封装的逻辑多。即：1：不能看不懂。2：不能只有1个地方用它。3：不要为1或2条语句封装。
 - **有价值的封装**：1：对象的对外动作方法封装。2：能被多个地方复用的，复杂的逻辑。
 
-### 正例：forRing
-
-三层嵌套循环，展开写 15 行：
-
-```java
-default void forRing(ServerLevel level, BiomeCoreBlockEntity be, int r,
-                     BiConsumer<BlockPos, BlockState> action) {
-    if (r < 0) return;
-    BlockPos c = be.getBlockPos();
-    int minY = be.minY(), maxY = be.maxY();
-    for (int dx = -r; dx <= r; dx++)
-        for (int dz = -r; dz <= r; dz++) {
-            if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
-            for (int y = minY; y <= maxY; y++) {
-                BlockPos p = new BlockPos(c.getX() + dx, y, c.getZ() + dz);
-                action.accept(p, level.getBlockState(p));
-            }
-        }
-}
-```
-
-调用：`forRing(level, be, r, (p, s) -> ...)`。**强功能性 + 一眼看懂。**
-
-### 反例：advance
-
-作为几个判断条件就能完成的事情，这里特意封装了一个难以理解的advance：
-
-```java
-default void advance(BiomeCoreBlockEntity be, String key, int want, IntConsumer process) {
-    int done = be.data.getInt(key);
-    while (done < want) process.accept(++done);
-    be.data.putInt(key, done);
-}
-```
-
-调用：`advance(be, "biome", Math.min(ring, MAX_RING), r -> processBiome(level, be, r))`。
-
-展开等价：
-
-```java
-if (tick % TICKS_PER_RING == 0) {
-    if (ring <= MAX_RING) processBiome(level, be, ring);
-}
-```
-
-**功能性等价，理解成本更低 → 展开写。**
 
 ---
 
-## 二、包结构
+## 二、双端分离与逻辑判断
+
+Minecraft 的客户端与服务端运行同一套代码。为避免跨端崩溃和逻辑错乱，必须严格遵循以下规范（详见 `SERVER_CLIENT.md`）。
+
+- **抛弃 `isClientSide`，拥抱 `instanceof ServerLevel`**：执行服务端逻辑时，不要用 `if (!level.isClientSide)` 然后手动强转。直接使用 `if (level instanceof ServerLevel serverLevel)`，利用 Java 模式匹配，既安全又省去强转代码。
+- **服务端专属方法参数直接声明为 `ServerLevel`**：若方法只修改世界、生成实体或发粒子，参数类型直接写 `ServerLevel`。在编译期强制要求调用方提供正确端，内部无需判断 `isClientSide`。
+- **`isClientSide` 的仅存场景**：纯客户端拦截（如渲染、粒子动画，无需服务端实例），或原版方法签名强制要求 `Level` 且无需进一步操作的卫语句。
+- **保持手感**：Mixin 拦截原版方法时，即使只在 `instanceof ServerLevel` 分支里执行了服务端逻辑，也要在外部统一 `cir.setReturnValue(InteractionResult.SUCCESS)`，避免客户端预测失败导致手感发粘。
+
+---
+
+## 三、包结构
 
 ```
 com.thelema.thrive
@@ -104,7 +69,7 @@ com.thelema.thrive
 
 ---
 
-## 三、注册规范
+## 四、注册规范
 
 所有注册器共用同一模板：
 
@@ -112,11 +77,8 @@ com.thelema.thrive
 public class XxxRegister {
     static final DeferredRegister<Xxx> XXX = DeferredRegister.create(..., ThriveMod.MOD_ID);
 
-    public static final DeferredHolder<Xxx, XxxType> NAME;
-
-    static {
-        NAME = XXX.register("name", () -> ...);
-    }
+    public static final DeferredHolder<Xxx, XxxType> NAME = XXX.register("name", () -> ...);
+    
 
     public static void register(IEventBus bus) {
         XXX.register(bus);
@@ -136,7 +98,7 @@ public static <B extends Block> DeferredHolder<Block, B> registerWithItem(String
 
 ---
 
-## 四、继承与组合
+## 五、继承与组合
 
 **强制基类只能继承**（`Block`、`BlockEntity`、`Item`……），继承位留给它。
 
@@ -155,10 +117,11 @@ public static <B extends Block> DeferredHolder<Block, B> registerWithItem(String
 
 ---
 
-## 五、任务手册
+## 六、任务手册
 
 | 任务 | 手册 |
 |---|---|
+| 双端分离与逻辑判断 | `SERVER_CLIENT.md` |
 | 添加实体 | `ENTITY.md` |
 | 实体 AI（Goal / 控制器 / 导航 / 攻击） | `AI.md` |
 | 添加物品 | `ITEM.md` |

@@ -1,39 +1,42 @@
 package com.thelema.thrive.mixin;
 
+import com.google.gson.JsonObject;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.thelema.thrive.generic.entity.misc.FishingArea;
-import com.thelema.thrive.register.FluidRegister;
-import com.thelema.thrive.register.ParticleRegister;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
+import com.thelema.thrive.MixinTool;
+import com.thelema.thrive.ThriveMod;
+import com.thelema.thrive.generic.entity.misc.BaitArea;
+import com.thelema.thrive.generic.entity.mob.VortexBreeze;
+import com.thelema.thrive.generic.fishing.FishingRuleLoader;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.common.NeoForgeMod;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Comparator;
+
 
 @Mixin(FishingHook.class)
 public abstract class FishingHookMixin {
 
-    // 1 & 2: 拦截 tick 里的水判定，让鱼钩在果汁里能成功浮起
+    // 1 & 2: 拦截 tick 里的水判定，让鱼钩在任意本模组流体里能成功浮起
     @ModifyExpressionValue(
             method = "tick",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/FluidState;is(Lnet/minecraft/tags/TagKey;)Z")
     )
-    private boolean thrive$allowJuiceInTick(boolean original, @Local FluidState fluidstate) {
-        return original || fluidstate.getFluidType() == FluidRegister.LANTERN_BERRY_JUICE_TYPE.get();
+    private boolean thrive$allowCustomFluidInTick(boolean original, @Local FluidState fluidstate) {
+        return original || MixinTool.isThriveFluid(fluidstate);
     }
 
     // 3: 拦截 catchingFish 里的液体方块判定（允许生成粒子和咬钩）
@@ -41,8 +44,8 @@ public abstract class FishingHookMixin {
             method = "catchingFish",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;is(Lnet/minecraft/world/level/block/Block;)Z")
     )
-    private boolean thrive$allowJuiceParticles(boolean original, @Local BlockState blockstate) {
-        return original || blockstate.is(FluidRegister.LANTERN_BERRY_JUICE_BLOCK.get());
+    private boolean thrive$allowCustomFluidParticles(boolean original, @Local BlockState blockstate) {
+        return original || MixinTool.isThriveBlock(blockstate);
     }
 
     // 4: 拦截开阔水域判定
@@ -50,8 +53,8 @@ public abstract class FishingHookMixin {
             method = "getOpenWaterTypeForBlock",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/FluidState;is(Lnet/minecraft/tags/TagKey;)Z")
     )
-    private boolean thrive$allowJuiceOpenWater(boolean original, @Local FluidState fluidstate) {
-        return original || fluidstate.getFluidType() == FluidRegister.LANTERN_BERRY_JUICE_TYPE.get();
+    private boolean thrive$allowCustomFluidOpenWater(boolean original, @Local FluidState fluidstate) {
+        return original || MixinTool.isThriveFluid(fluidstate);
     }
 
     // 5: 拦截战利品表获取
@@ -61,56 +64,113 @@ public abstract class FishingHookMixin {
     )
     private LootTable thrive$changeJuiceLootTable(LootTable original) {
         FishingHook hook = (FishingHook) (Object) this;
-        ServerLevel serverLevel = (ServerLevel) hook.level();
+        if (!(hook.level() instanceof ServerLevel serverLevel)) return original;
 
-        // 1. 优先找 13x13x13 范围内最近的 FishingArea
+        // 1. 获取当前环境 ID 字符串
+        FluidState fs = serverLevel.getFluidState(hook.blockPosition());
+        if (fs.isEmpty()) return original;
+
+        ResourceLocation fluidId = NeoForgeRegistries.FLUID_TYPES.getKey(fs.getFluidType());
+        if (fluidId == null) return original;
+        String f = fluidId.toString();
+        if (f.endsWith("_type")) {
+            f = f.substring(0, f.length() - 5);
+        }
+
+        ResourceLocation biomeId = serverLevel.getBiome(hook.blockPosition()).unwrapKey()
+                .map(ResourceKey::location).orElse(null);
+        String b = biomeId != null ? biomeId.toString() : "any";
+
+        // 获取鱼饵
         AABB area = AABB.ofSize(hook.position(), 13.0, 13.0, 13.0);
-        FishingArea nearestArea = serverLevel.getEntitiesOfClass(FishingArea.class, area)
+        BaitArea nearestBaitArea = serverLevel.getEntitiesOfClass(BaitArea.class, area)
                 .stream()
-                .min(Comparator.comparingDouble(a -> a.distanceToSqr(hook)))
+                .min(Comparator.comparingDouble(e -> e.distanceToSqr(hook)))
                 .orElse(null);
 
-        if (nearestArea != null && nearestArea.lootTable != null) {
-            return serverLevel.getServer().reloadableRegistries().getLootTable(nearestArea.lootTable);
-        }
+        String ba = (nearestBaitArea != null && nearestBaitArea.baitItemId != null)
+                ? nearestBaitArea.baitItemId.toString() : null;
 
-        // 2. 其次根据流体类型动态获取
-        FluidState fluidState = serverLevel.getFluidState(hook.blockPosition());
+        // 2. 遍历规则并寻找最优解
+        JsonObject bestMatch = null;
+        int highestScore = -1;
 
-        if (!fluidState.isEmpty() && fluidState.getFluidType() != NeoForgeMod.WATER_TYPE.value()) {
-            ResourceLocation fluidId = NeoForgeRegistries.FLUID_TYPES.getKey(fluidState.getFluidType());
+        for (JsonObject rule : FishingRuleLoader.RULES) {
+            int score = 0;
+            boolean match = true;
 
-            if (fluidId != null) {
-                ResourceKey<LootTable> customLootTable = ResourceKey.create(
-                        Registries.LOOT_TABLE,
-                        ResourceLocation.fromNamespaceAndPath(fluidId.getNamespace(), "fishing/" + fluidId.getPath())
-                );
-                return serverLevel.getServer().reloadableRegistries().getLootTable(customLootTable);
+            // 检查流体
+            if (rule.has("fluid")) {
+                String ruleFluid = rule.get("fluid").getAsString();
+                if (!ruleFluid.equals("any")) {
+                    if (!ruleFluid.equals(f)) { match = false; }
+                    else { score++; }
+                }
+            }
+
+            // 检查群系
+            if (match && rule.has("biome")) {
+                String ruleBiome = rule.get("biome").getAsString();
+                if (!ruleBiome.equals("any")) {
+                    if (!ruleBiome.equals(b)) { match = false; }
+                    else { score++; }
+                }
+            }
+
+            // 检查鱼饵
+            if (match && rule.has("bait")) {
+                String ruleBait = rule.get("bait").getAsString();
+                if (!ruleBait.equals("any")) {
+                    if (!ruleBait.equals(ba)) { match = false; }
+                    else { score++; }
+                }
+            }
+
+            // 如果匹配成功，且条件比上一个更严苛（分数更高），则替换
+            if (match && score > highestScore) {
+                highestScore = score;
+                bestMatch = rule;
             }
         }
 
-        // 3. 原版默认
+        // 3. 如果找到了匹配的规则，直接加载战利品表
+        if (bestMatch != null && bestMatch.has("loot_table")) {
+            ResourceLocation tableId = ResourceLocation.parse(bestMatch.get("loot_table").getAsString());
+            ResourceKey<LootTable> key = ResourceKey.create(Registries.LOOT_TABLE, tableId);
+            LootTable table = serverLevel.getServer().reloadableRegistries().getLootTable(key);
+            if (table != LootTable.EMPTY) {
+                ThriveMod.LOGGER.info("钓鱼查表 -> 流体: {}, 鱼饵: {}", f, ba);
+                return table;
+            }
+        }
+
+
+        // 4. 未命中任何自定义表，返回原版
         return original;
     }
 
-    // 6: 替换果汁里的粒子（水花、气泡、汇聚水流）
-    @ModifyArg(
-            method = "catchingFish",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;sendParticles(Lnet/minecraft/core/particles/ParticleOptions;DDDIDDDD)I"),
-            index = 0
+    // 6. 增大对实体的拉动
+    @Redirect(
+            method = "pullEntity",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V")
     )
-    private ParticleOptions thrive$changeJuiceParticles(ParticleOptions original) {
+    private void thrive$enhancePullForce(Entity entity, Vec3 originalDelta) {
         FishingHook hook = (FishingHook) (Object) this;
-        if (hook.level().getFluidState(hook.blockPosition()).getFluidType() == FluidRegister.LANTERN_BERRY_JUICE_TYPE.get()) {
-            // 原版水花和汇聚水流 -> 换成我们的彩色水花（带物理碰撞）
-            if (original == ParticleTypes.SPLASH || original == ParticleTypes.FISHING) {
-                return ParticleRegister.JUICE_SPLASH.get();
-            }
-            // 原版气泡 -> 换成我们绑定了新贴图的气泡类
-            if (original == ParticleTypes.BUBBLE) {
-                return ParticleRegister.JUICE_BUBBLE.get();
-            }
+        Entity owner = hook.getOwner();
+
+        if (entity instanceof VortexBreeze && owner != null) {
+            // 原版是 0.1D，增加两倍变成 0.3D
+            Vec3 vec3 = new Vec3(
+                    owner.getX() - hook.getX(),
+                    owner.getY() - hook.getY(),
+                    owner.getZ() - hook.getZ()
+            ).scale(0.3D);
+            entity.setDeltaMovement(entity.getDeltaMovement().add(vec3));
+            return;
         }
-        return original;
+        // 其他实体走原版逻辑
+        entity.setDeltaMovement(originalDelta);
     }
+
+
 }

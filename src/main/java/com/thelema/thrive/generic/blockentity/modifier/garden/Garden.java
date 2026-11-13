@@ -18,8 +18,7 @@ import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
 public class Garden extends PhasedModifier {
 
-    private static final BiomeTypeChanger TO_GARDEN =
-            new BiomeTypeChanger(null, GardenHelper.TARGET);
+    private static final BiomeTypeChanger TO_GARDEN = BiomeTypeChanger.any(GardenHelper.TARGET);
 
     public Garden() {
         addPos(Ring.TICK_20, Garden::prepare);           // PREPARE：clear + surface

@@ -1,10 +1,10 @@
-package com.thelema.thrive.client.render.entity;
+package com.thelema.thrive.client.render.entity.misc;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.thelema.thrive.ThriveMod;
-import com.thelema.thrive.generic.entity.mob.BreezeCore;
+import com.thelema.thrive.generic.entity.mob.VortexBreeze;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -14,20 +14,20 @@ import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
-public class BreezeCoreWindLayer extends GeoRenderLayer<BreezeCore> {
+public class BreezeCoreWindLayer extends GeoRenderLayer<VortexBreeze> {
 
     private static final ResourceLocation WIND =
-            ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, "textures/entity/breeze_core/wind.png");
+            ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, "textures/entity/converge_breeze/wind.png");
 
     /** 原版偏移量单位是像素，乘这个系数放大到肉眼可见。 */
     private static final float WOBBLE = 4.0F;
 
-    public BreezeCoreWindLayer(GeoEntityRenderer<BreezeCore> renderer) {
+    public BreezeCoreWindLayer(GeoEntityRenderer<VortexBreeze> renderer) {
         super(renderer);
     }
 
     @Override
-    public void render(PoseStack poseStack, BreezeCore entity, BakedGeoModel bakedModel,
+    public void render(PoseStack poseStack, VortexBreeze entity, BakedGeoModel bakedModel,
                        RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer,
                        float partialTick, int packedLight, int packedOverlay) {
         float t = entity.tickCount + partialTick;
@@ -44,8 +44,10 @@ public class BreezeCoreWindLayer extends GeoRenderLayer<BreezeCore> {
         // 按附着状态取色
         float cr, cg, cb;
         switch (entity.getFlag()) {
-            case 1 -> { cr = 0.45F; cg = 0.80F; cb = 1.00F; }   // 水蓝
-            case 2 -> { cr = 1.00F; cg = 0.55F; cb = 0.15F; }   // 火焰橙
+            case 1 -> { cr = 0.45F; cg = 0.80F; cb = 1.00F; }   // 水：水蓝
+            case 2 -> { cr = 1.00F; cg = 0.55F; cb = 0.15F; }   // 火：火焰橙
+            case 3 -> { cr = 0.60F; cg = 0.40F; cb = 1.00F; }   // 雷雨：紫电蓝
+            case 4 -> { cr = 0.85F; cg = 0.95F; cb = 1.00F; }   // 雪：冰蓝白
             default -> { cr = 1.00F; cg = 1.00F; cb = 1.00F; }  // 原色
         }
 

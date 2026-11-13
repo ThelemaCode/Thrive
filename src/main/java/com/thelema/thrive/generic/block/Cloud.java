@@ -4,16 +4,17 @@ import com.thelema.thrive.generic.block.other.CloudLightHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HalfTransparentBlock;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class Cloud extends HalfTransparentBlock {
 
     public Cloud() {
-        super(BlockBehaviour.Properties.ofFullCopy(Blocks.WHITE_WOOL)
+        super(BlockBehaviour.Properties.of()
                 .noOcclusion()   // 不剔除相邻面、不阻挡视线、不窒息
+                .sound(SoundType.WOOL)
                 .strength(0.5f)
                 .lightLevel(v -> 0)); // 不遮挡光照，Mixin 扫描可穿透
     }

@@ -32,56 +32,40 @@ public class BlockRegister {
         return block;
     }
 
-    public static final DeferredHolder<Block, Block> MOSS_FRAME;
-    public static final DeferredHolder<Block, Block> LANTERN_BERRY;
-    public static final DeferredHolder<Block, Block> LANTERN_BERRY_PEEL;
+    public static final DeferredHolder<Block, Block> MOSS_FRAME = registerWithItem("moss_frame", () -> new Block(Block.Properties.of().strength(4.0F)));            // 硬度 4（原木为 2）.sound(SoundType.WOOD)       // 木质音效.requiresCorrectToolForDrops() // 可选：需要合适工具));
 
-    public static final DeferredHolder<Block, Block> MOSS_PLANTING_BLOCK;
+    public static final DeferredHolder<Block, Block> MOSS_PLANTING_BLOCK = registerWithItem("moss_planting_block", MossPlantingBlock::new);
 
-    public static final DeferredHolder<Block, Block> SUN_BERRY;
-    public static final DeferredHolder<Block, Block> GRASS_BLOCK;
-    public static final DeferredHolder<Block, Block> BIOME_CORE;
-    public static final DeferredHolder<Block, Block> GARDEN_BEE_NEST;
-    public static final DeferredHolder<Block, Block> BIOME_SAPLING;
-    public static final DeferredHolder<Block, Block> CLOUD;
-    public static final DeferredHolder<Block, Block> WISPY_CLOUD;
+    public static final DeferredHolder<Block, Block> LANTERN_BERRY = registerWithItem("lantern_berry", LanternBerry::new);
 
-    static {
+    public static final DeferredHolder<Block, Block> LANTERN_BERRY_PEEL = registerWithItem("lantern_berry_peel", () -> new Block(Block.Properties.of().strength(1.0F).sound(SoundType.MUD)));
 
-        MOSS_FRAME = registerWithItem("moss_frame",
-                () -> new Block(Block.Properties.of()
-                        .strength(4.0F)              // 硬度 4（原木为 2）
-                        .sound(SoundType.WOOD)       // 木质音效
-                        .requiresCorrectToolForDrops() // 可选：需要合适工具
-                ));
+    public static final DeferredHolder<Block, Block> SUN_BERRY = registerWithItem("sun_berry", SunBerry::new);
 
-        MOSS_PLANTING_BLOCK = registerWithItem("moss_planting_block", MossPlantingBlock::new);
+    public static final DeferredHolder<Block, Block> GRASS_BLOCK = registerWithItem("grass_block", () -> new GrassBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.GRASS_BLOCK)));
 
-        LANTERN_BERRY = registerWithItem("lantern_berry", LanternBerry::new);
+    public static final DeferredHolder<Block, Block> GARDEN_BEE_NEST = registerWithItem("garden_bee_nest", GardenBeeNest::new);
 
-        LANTERN_BERRY_PEEL = registerWithItem("lantern_berry_peel", () -> new Block(Block.Properties.of()
-                .strength(1.0F)
-                .sound(SoundType.MUD)
-        ));
+    public static final DeferredHolder<Block, Block> CLOUD = registerWithItem("cloud", Cloud::new);
 
-        SUN_BERRY = registerWithItem("sun_berry", SunBerry::new);
+    public static final DeferredHolder<Block, Block> WISPY_CLOUD = registerWithItem("wispy_cloud", Cloud::new);
 
-        GRASS_BLOCK = registerWithItem("grass_block", () -> new GrassBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.GRASS_BLOCK)));
+    // ------ 群系转化相关 ------
 
-        // 群系核心
-        BIOME_CORE = registerWithItem("biome_core", BiomeCore::new);
+    // 群系核心
+    public static final DeferredHolder<Block, Block> BIOME_CORE = registerWithItem("biome_core", BiomeCore::new);
 
+    // 群系树苗
+    public static final DeferredHolder<Block, Block> BIOME_SAPLING = registerWithItem("biome_sapling", BiomeSapling::new);
 
-        GARDEN_BEE_NEST = registerWithItem("garden_bee_nest", GardenBeeNest::new);
+    // ------ 花哨的树 ------
+    public static final DeferredHolder<Block, Block> FANCY_ACACIA_SAPLING_1 = registerWithItem("fancy_acacia_sapling_1", ()->new FancySapling(ThriveMod.MOD_ID, "fancy_acacia_tree_1", 3, 0, 4));
+    public static final DeferredHolder<Block, Block> FANCY_ACACIA_SAPLING_2 = registerWithItem("fancy_acacia_sapling_2", ()->new FancySapling(ThriveMod.MOD_ID, "fancy_acacia_tree_2", 4, 0, 5));
+    public static final DeferredHolder<Block, Block> FANCY_BIRCH_SAPLING_1 = registerWithItem("fancy_birch_sapling_1", ()->new FancySapling(ThriveMod.MOD_ID, "fancy_birch_tree_1", 3, 0, 3));
+    public static final DeferredHolder<Block, Block> FANCY_BERRY_SAPLING_1 = registerWithItem("fancy_cherry_sapling_1", ()->new FancySapling(ThriveMod.MOD_ID, "fancy_cherry_tree_1", 8, 0, 5));
 
-        // 树苗的特性：无碰撞、一碰就碎、植物音效、允许随机刻
-        BIOME_SAPLING = registerWithItem("biome_sapling", BiomeSapling::new);
-
-        CLOUD = registerWithItem("cloud", Cloud::new);
-        WISPY_CLOUD = registerWithItem("wispy_cloud", Cloud::new);
-
-    }
+    // ------ moss ------
+    // ------ garden ------
 
 
 }
-

@@ -22,14 +22,13 @@ import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
  */
 public class Moss extends PhasedModifier {
 
-    private static final BiomeTypeChanger ANY_TO_MOSS =
-            new BiomeTypeChanger(null, MossHelper.TARGET);
+    private static final BiomeTypeChanger ANY_TO_MOSS = BiomeTypeChanger.any(MossHelper.TARGET);
 
     public Moss() {
         addPos(Ring.TICK_20, MossHelper.skipMoss(Moss::prepare));      // PREPARE：清植被 + 改地表
         addPos(Ring.TICK_10, MossHelper.skipMoss(MossHelper::lake));   // LAKE
         addPos(Ring.TICK_20, MossHelper.skipMoss(MossHelper::deco));   // DECO
-        addBS (Ring.TICK_20, ANY_TO_MOSS);                             // REWRITE
+        addBS(Ring.TICK_20, ANY_TO_MOSS);                             // REWRITE
         addFinish(MossHelper.TREE_MOSS);                               // DONE
     }
 

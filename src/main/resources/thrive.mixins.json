@@ -17,11 +17,18 @@
     "WitchAccessor",
     "AbstractArrowMixin",
     "FishingHookMixin",
-    "BreezeDeflectionMixin",
+    "BreezeMixin",
+    "EntityMixin",
+    "EntityAccessor",
+    "LivingEntityMixin",
     "FlintAndSteelItemMixin"
   ],
   "client": [
-    "LocalPlayerMixin"
+    "LocalPlayerMixin",
+    "BubbleParticleMixin",
+    "WakeParticleMixin",
+    "WaterDropParticleMixin",
+    "SplashParticleMixin"
   ],
   "server": [
   ]

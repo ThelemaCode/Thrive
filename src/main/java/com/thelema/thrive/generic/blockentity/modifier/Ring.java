@@ -17,29 +17,31 @@ public final class Ring implements PosFinder {
     /**
      * 1 秒 1 环。
      */
-    public static final Ring TICK_20 = new Ring(20, MAX_RING, 0, 0);
+    public static final Ring TICK_20 = new Ring(20, MAX_RING, 0, 0, 0);
     /**
      * 0.5 秒 1 环。
      */
-    public static final Ring TICK_10 = new Ring(10, MAX_RING, 0, 0);
+    public static final Ring TICK_10 = new Ring(10, MAX_RING, 0, 0, 0);
 
     private final int interval;
     private final int maxRing;
     private final int offsetX;
     private final int offsetZ;
+    private final int delay;
 
-    public Ring(int interval, int maxRing, int offsetX, int offsetZ) {
+    public Ring(int interval, int maxRing, int offsetX, int offsetZ, int delay) {
         this.interval = interval;
         this.maxRing = maxRing;
         this.offsetX = offsetX;
         this.offsetZ = offsetZ;
+        this.delay = delay;
     }
 
     @Override
     public boolean find(BiomeCoreBlockEntity be, PosApplier apply) {
         long tick = BiomeUtil.getTick(be);
         if (tick % interval != 0) return false;
-        int r = (int) (tick / interval);
+        int r = (int) (tick / interval) - delay;
         if (r > maxRing) return true;
         ring(be, r, apply);
         return r == maxRing;

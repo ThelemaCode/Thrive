@@ -3,27 +3,23 @@ package com.thelema.thrive.generic.entity.misc;
 import com.thelema.thrive.register.FluidRegister;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.storage.loot.LootTable;
 import org.jetbrains.annotations.Nullable;
 
-public class FishingArea extends Entity {
+public class BaitArea extends Entity {
 
     @Nullable
-    public ResourceKey<LootTable> lootTable = null;
+    public ResourceLocation baitItemId = null; // 鱼饵物品ID
+    public int lifespan = 12000; // 10分钟
 
-    public int lifespan = 12000;
-
-    public FishingArea(EntityType<?> type, Level level) {
+    public BaitArea(EntityType<?> type, Level level) {
         super(type, level);
         this.noPhysics = true;
         this.setNoGravity(true);
@@ -80,9 +76,8 @@ public class FishingArea extends Entity {
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        if (tag.contains("LootTable")) {
-            this.lootTable = ResourceKey.create(Registries.LOOT_TABLE,
-                    ResourceLocation.parse(tag.getString("LootTable")));
+        if (tag.contains("BaitItemId")) {
+            this.baitItemId = ResourceLocation.parse(tag.getString("BaitItemId"));
         }
         if (tag.contains("Lifespan")) {
             this.lifespan = tag.getInt("Lifespan");
@@ -91,8 +86,8 @@ public class FishingArea extends Entity {
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
-        if (this.lootTable != null) {
-            tag.putString("LootTable", this.lootTable.location().toString());
+        if (this.baitItemId != null) {
+            tag.putString("BaitItemId", this.baitItemId.toString());
         }
         tag.putInt("Lifespan", this.lifespan);
     }

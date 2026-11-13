@@ -18,7 +18,7 @@ public abstract class LocalPlayerMixin {
 
     @Shadow @Final private List<AmbientSoundHandler> ambientSoundHandlers;
 
-    /** 构造器 RETURN 时原版三个 handler 已经 add 完，这里追加我们的。 */
+    // 添加气泡声
     @Inject(method = "<init>", at = @At("RETURN"))
     private void thrive$addJuiceHandler(CallbackInfo ci) {
         this.ambientSoundHandlers.add(new JuiceSound(

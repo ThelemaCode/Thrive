@@ -139,7 +139,7 @@ public class LanternBerryCreeper extends Creeper implements GeoAnimatable {
 
     /** 由 CreeperMixin 在父类 explodeCreeper 的 HEAD 处调用，替代原版爆炸。 */
     public void fireExplode() {
-        if (!level().isClientSide) {
+        if (level() instanceof ServerLevel) {
             dead = true;
 
             gameEvent(GameEvent.ENTITY_DIE);

@@ -2,11 +2,17 @@ package com.thelema.thrive.register;
 
 import com.thelema.thrive.ThriveMod;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -18,6 +24,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -26,10 +33,13 @@ import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.common.SoundActions;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidInteractionRegistry;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
+
+import javax.annotation.Nullable;
 
 @EventBusSubscriber(modid = ThriveMod.MOD_ID)
 public class FluidRegister {
@@ -56,9 +66,12 @@ public class FluidRegister {
                             .temperature(350)
                             .canConvertToSource(false)
                             .lightLevel(15)
+                            .canSwim(true)
                             .supportsBoating(true)
                             .sound(SoundActions.BUCKET_FILL, SoundEvents.BUCKET_FILL)
-                            .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY)));
+                            .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY)){
+
+            });
 
     /**
      * 源头流体。
@@ -128,25 +141,104 @@ public class FluidRegister {
                 .levelDecreasePerBlock(2);
     }
 
+    // ─── 流体：天空水 ───
+
+    // 1. 流体类型
+    public static final DeferredHolder<FluidType, FluidType> SKY_WATER_TYPE =
+            FLUID_TYPES.register("sky_water_type", () -> new FluidType(
+                    FluidType.Properties.create()
+                            .canConvertToSource(false)
+                            .canSwim(true)
+                            .sound(SoundActions.BUCKET_FILL, SoundEvents.BUCKET_FILL)
+                            .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY)){
+                @Override
+                public boolean isVaporizedOnPlacement(Level level, BlockPos pos, FluidStack stack) {
+                    return level.dimensionType().ultraWarm();
+                }
+
+                @Override
+                public void onVaporize(@Nullable Player player, Level level, BlockPos pos, FluidStack stack) {
+                    SoundEvent sound = SoundEvents.FIRE_EXTINGUISH;
+                    level.playSound(player, pos, sound, SoundSource.BLOCKS, 0.5F, 2.6F + (level.random.nextFloat() - level.random.nextFloat()) * 0.8F);
+                    if (level instanceof ServerLevel serverLevel) {
+                        for (int i = 0; i < 8; ++i) {
+                            serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
+                                    pos.getX() + Math.random(), pos.getY() + Math.random(), pos.getZ() + Math.random(),
+                                    1, 0.0, 0.0, 0.0, 0.0);
+                        }
+                    }
+                }
+            });
+
+    // 2. 源方块 (禁止自身向四周扩散)
+    public static final DeferredHolder<Fluid, BaseFlowingFluid.Source> SKY_WATER_STILL =
+            FLUIDS.register("sky_water_still", () -> new BaseFlowingFluid.Source(skyWaterProps()) {
+                @Override
+                protected boolean canSpreadTo(BlockGetter level, BlockPos fromPos, BlockState fromBlockState, Direction direction, BlockPos toPos, BlockState toBlockState, FluidState toFluidState, Fluid fluid) {
+                    return false;
+                }
+            });
+
+    // 3. 流动方块 (彻底阻断任何流动)
+    public static final DeferredHolder<Fluid, BaseFlowingFluid.Flowing> SKY_WATER_FLOWING =
+            FLUIDS.register("sky_water_flowing", () -> new BaseFlowingFluid.Flowing(skyWaterProps()) {
+                @Override
+                protected boolean canSpreadTo(BlockGetter level, BlockPos fromPos, BlockState fromBlockState, Direction direction, BlockPos toPos, BlockState toBlockState, FluidState toFluidState, Fluid fluid) {
+                    return false;
+                }
+            });
+
+    // 4. 流体方块
+    public static final DeferredHolder<Block, LiquidBlock> SKY_WATER_BLOCK =
+            BlockRegister.BLOCK.register("sky_water_block", () -> new LiquidBlock(
+                    SKY_WATER_STILL.get(),
+                    Block.Properties.ofFullCopy(Blocks.WATER).noLootTable()
+            ) {
+                @Override
+                public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
+                    return 0; // 确保方块状态也不发光
+                }
+            });
+
+    // 5. 占位水桶 (复用原版水桶的贴图，但倒出来的是 sky_water)
+    public static final DeferredHolder<Item, BucketItem> SKY_WATER_BUCKET =
+            ItemRegister.ITEM.register("sky_water_bucket", () -> new BucketItem(
+                    SKY_WATER_STILL.get(),
+                    new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)));
+
+    private static BaseFlowingFluid.Properties skyWaterProps() {
+        return new BaseFlowingFluid.Properties(SKY_WATER_TYPE, SKY_WATER_STILL, SKY_WATER_FLOWING)
+                .block(SKY_WATER_BLOCK)
+                .bucket(SKY_WATER_BUCKET);
+    }
+
     public static void register(IEventBus bus) {
         FLUID_TYPES.register(bus);
         FLUIDS.register(bus);
     }
 
     /**
-     * 流体交互注册。
-     * 注册在 LAVA_TYPE 上——岩浆遇 juice 时主动触发，跟原版"岩浆遇水"机制一致。
-     * 谓词判断"相邻是 juice"，结果改的是岩浆自己的位置：
-     *   源头 → 黑曜石，流动 → 圆石，并自动触发烟+滋滋声。
-     * 与水互不反应：两边都没注册对水的 interaction。
+     * 流体交互注册
      */
     @SubscribeEvent
     public static void register(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
+            // 果汁与岩浆
             FluidInteractionRegistry.addInteraction(
                     NeoForgeMod.LAVA_TYPE.value(),
                     new FluidInteractionRegistry.InteractionInformation(
-                            LANTERN_BERRY_JUICE_TYPE.get(),
+                            FluidRegister.LANTERN_BERRY_JUICE_TYPE.get(),
+                            (fluidState) -> fluidState.isSource()
+                                    ? Blocks.OBSIDIAN.defaultBlockState()
+                                    : Blocks.COBBLESTONE.defaultBlockState()
+                    )
+            );
+
+            // 天空水与岩浆（与原版水一致）
+            FluidInteractionRegistry.addInteraction(
+                    NeoForgeMod.LAVA_TYPE.value(),
+                    new FluidInteractionRegistry.InteractionInformation(
+                            FluidRegister.SKY_WATER_TYPE.get(),
                             (fluidState) -> fluidState.isSource()
                                     ? Blocks.OBSIDIAN.defaultBlockState()
                                     : Blocks.COBBLESTONE.defaultBlockState()
