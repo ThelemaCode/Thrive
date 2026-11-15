@@ -8,9 +8,15 @@ import net.minecraft.world.level.biome.Biome;
 
 public interface BiomeConstant {
 
-    /** 花园群系的 ResourceKey */
+    // 原始星球形态
+    ResourceKey<Biome> ROCK = biome("rock");
+    ResourceKey<Biome> SKY = biome("sky");
+    ResourceKey<Biome> SEA = biome("sea");
+
+
     ResourceKey<Biome> GARDEN = biome("garden");
     ResourceKey<Biome> MOSS = biome("moss");
+    ResourceKey<Biome> CLOUD = biome("cloud");
     ResourceKey<Biome> SUNBERRY = biome("sunberry");
 
     static ResourceKey<Biome> biome(String name){
