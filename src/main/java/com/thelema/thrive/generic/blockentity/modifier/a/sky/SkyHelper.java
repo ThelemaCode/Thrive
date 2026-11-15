@@ -2,11 +2,8 @@ package com.thelema.thrive.generic.blockentity.modifier.a.sky;
 
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
 import com.thelema.thrive.register.BlockRegister;
-import com.thelema.thrive.register.constant.BiomeConstant;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -17,7 +14,6 @@ final class SkyHelper {
 
     private SkyHelper() {}
 
-    static final ResourceKey<Biome> TARGET = BiomeConstant.SKY;
 
     static boolean isSkyPlant(BlockState s) {
         return s.is(BlockRegister.CLOUD.get())

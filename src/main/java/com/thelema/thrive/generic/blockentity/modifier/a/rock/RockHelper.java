@@ -6,7 +6,6 @@ import com.thelema.thrive.register.BlockRegister;
 import com.thelema.thrive.register.constant.BiomeConstant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.biome.Biome;
@@ -19,9 +18,6 @@ import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 final class RockHelper {
 
     private RockHelper() {}
-
-    static final ResourceKey<Biome> TARGET = BiomeConstant.ROCK;
-
 
     static void terrain(BiomeCoreBlockEntity be, BlockPos p) {
         if (!(be.getLevel() instanceof ServerLevel level)) return;
@@ -63,7 +59,7 @@ final class RockHelper {
             if (!(be.getLevel() instanceof ServerLevel sl)) return;
             Holder<Biome> b = sl.getChunk(p).getNoiseBiome(
                     p.getX() >> 2, p.getY() >> 2, p.getZ() >> 2);
-            if (!b.is(TARGET)) inner.apply(be, p);
+            if (!b.is(BiomeConstant.ROCK)) inner.apply(be, p);
         };
     }
 }

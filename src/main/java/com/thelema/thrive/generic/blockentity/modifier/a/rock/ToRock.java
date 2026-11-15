@@ -7,7 +7,6 @@ import com.thelema.thrive.generic.blockentity.modifier.Ring;
 import com.thelema.thrive.register.constant.BiomeConstant;
 import com.thelema.thrive.register.constant.TagConstant;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
 
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.forBS;
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.forPos;
@@ -18,11 +17,10 @@ public class ToRock implements BiomeModifier {
     private static final Ring R_REWRITE = new Ring(10);
     private static final Ring R_TERRAIN = new Ring(10, 0, 0, 2);
 
-    /**条件：主世界，低于200格，陆地群系标签 */
+    /**条件：低于200格，陆地群系标签 */
     @Override
     public boolean canUse(BiomeCoreBlockEntity be) {
         if (!(be.getLevel() instanceof ServerLevel sl)) return false;
-        if (sl.dimension() != Level.OVERWORLD) return false;
         if (be.getBlockPos().getY() >= 200) return false;
         return sl.getBiome(be.getBlockPos()).is(TagConstant.IS_LAND);
     }

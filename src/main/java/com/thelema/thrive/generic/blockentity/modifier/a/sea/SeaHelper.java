@@ -2,12 +2,9 @@ package com.thelema.thrive.generic.blockentity.modifier.a.sea;
 
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
 import com.thelema.thrive.register.BlockRegister;
-import com.thelema.thrive.register.constant.BiomeConstant;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -17,8 +14,6 @@ import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 final class SeaHelper {
 
     private SeaHelper() {}
-
-    static final ResourceKey<Biome> TARGET = BiomeConstant.SEA;
 
     static boolean isOceanPlant(BlockState s) {
         return s.is(BlockTags.CORAL_BLOCKS)

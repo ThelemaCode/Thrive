@@ -25,6 +25,7 @@ public interface TagConstant {
 
     // 群系
     TagKey<Biome> IS_LAND = biome("is_land");
+    TagKey<Biome> IS_OCEAN = biome("is_ocean");
 
     private static TagKey<Item> item(String name) {
         return TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));

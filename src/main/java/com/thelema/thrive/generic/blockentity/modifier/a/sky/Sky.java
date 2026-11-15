@@ -4,8 +4,8 @@ import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
 import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
 import com.thelema.thrive.generic.blockentity.modifier.BiomeTypeChanger;
 import com.thelema.thrive.generic.blockentity.modifier.Ring;
+import com.thelema.thrive.register.constant.BiomeConstant;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
 
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.forBS;
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.forPos;
@@ -15,16 +15,16 @@ import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.forPos;
  */
 public class Sky implements BiomeModifier {
 
-    private static final BiomeTypeChanger ANY_TO_SKY = BiomeTypeChanger.any(SkyHelper.TARGET);
+    private static final BiomeTypeChanger ANY_TO_SKY = BiomeTypeChanger.any(BiomeConstant.SKY);
 
     private static final Ring R_REWRITE = new Ring(10);
     private static final Ring R_CLEAR   = new Ring(10, 0, 0, 2);
 
+    /**条件：天空*/
     @Override
     public boolean canUse(BiomeCoreBlockEntity be) {
         if (!(be.getLevel() instanceof ServerLevel sl)) return false;
-        if (sl.dimension() != Level.OVERWORLD) return false;
-        return sl.getBiome(be.getBlockPos()).is(SkyHelper.TARGET);
+        return sl.getBiome(be.getBlockPos()).is(BiomeConstant.SKY);
     }
 
     @Override
