@@ -1,0 +1,36 @@
+package com.thelema.thrive.generic.blockentity.modifier.a.sky;
+
+import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
+import com.thelema.thrive.register.BlockRegister;
+import com.thelema.thrive.register.constant.BiomeConstant;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
+
+final class SkyHelper {
+
+    private SkyHelper() {}
+
+    static final ResourceKey<Biome> TARGET = BiomeConstant.SKY;
+
+    static boolean isSkyPlant(BlockState s) {
+        return s.is(BlockRegister.CLOUD.get())
+                || s.is(BlockRegister.WISPY_CLOUD.get());
+    }
+
+    static void clear(BiomeCoreBlockEntity be, BlockPos p) {
+        if (!(be.getLevel() instanceof ServerLevel level)) return;
+        BlockState s = level.getBlockState(p);
+        if (s.isAir()) return;
+        if (s.is(BlockRegister.BIOME_CORE.get())) return;
+        if (!isSkyPlant(s)) return;
+        set(level, p, Blocks.AIR.defaultBlockState());
+        markDirty(level, p);
+    }
+}

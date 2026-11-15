@@ -11,7 +11,7 @@ public interface DamageTypeConstant {
     ResourceKey<DamageType> SUN = dt("sun");
     ResourceKey<DamageType> WIND_GROUND = dt("wind_ground");
 
-    static ResourceKey<DamageType> dt(String name){
+    private static ResourceKey<DamageType> dt(String name){
         return ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
     }
 }

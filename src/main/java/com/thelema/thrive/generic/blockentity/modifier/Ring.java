@@ -8,8 +8,7 @@ public final class Ring implements PosFinder {
 
     /** 1 秒 1 环。 */
     public static final Ring TICK_20 = new Ring(20);
-    /** 0.5 秒 1 环。 */
-    public static final Ring TICK_10 = new Ring(10);
+
 
     private final int interval;
     private final int offsetX;

@@ -8,6 +8,8 @@ import net.minecraft.world.level.biome.Biome;
 
 public interface BiomeConstant {
 
+
+
     // 原始星球形态
     ResourceKey<Biome> ROCK = biome("rock");
     ResourceKey<Biome> SKY = biome("sky");
@@ -19,7 +21,7 @@ public interface BiomeConstant {
     ResourceKey<Biome> CLOUD = biome("cloud");
     ResourceKey<Biome> SUNBERRY = biome("sunberry");
 
-    static ResourceKey<Biome> biome(String name){
+    private static ResourceKey<Biome> biome(String name){
         return ResourceKey.create(Registries.BIOME,ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
     }
 }

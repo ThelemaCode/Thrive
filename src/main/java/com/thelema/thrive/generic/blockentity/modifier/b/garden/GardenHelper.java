@@ -1,4 +1,4 @@
-package com.thelema.thrive.generic.blockentity.modifier.garden;
+package com.thelema.thrive.generic.blockentity.modifier.b.garden;
 
 import com.thelema.thrive.generic.block.GardenBeeNest;
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;

@@ -1,4 +1,4 @@
-package com.thelema.thrive.generic.blockentity.modifier.sunberry;
+package com.thelema.thrive.generic.blockentity.modifier.c.sunberry;
 
 import com.thelema.thrive.generic.block.SunBerry;
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;

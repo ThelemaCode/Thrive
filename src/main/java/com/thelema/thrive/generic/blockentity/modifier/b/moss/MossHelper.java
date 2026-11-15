@@ -1,4 +1,4 @@
-package com.thelema.thrive.generic.blockentity.modifier.moss;
+package com.thelema.thrive.generic.blockentity.modifier.b.moss;
 
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
 import com.thelema.thrive.generic.blockentity.modifier.PosApplier;

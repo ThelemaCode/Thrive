@@ -1,11 +1,17 @@
 package com.thelema.thrive.generic.blockentity.modifier;
 
 import com.thelema.thrive.ThriveMod;
-import com.thelema.thrive.generic.blockentity.modifier.cloud.SkyToCloud;
-import com.thelema.thrive.generic.blockentity.modifier.garden.ForestToGarden;
-import com.thelema.thrive.generic.blockentity.modifier.garden.Garden;
-import com.thelema.thrive.generic.blockentity.modifier.moss.Moss;
-import com.thelema.thrive.generic.blockentity.modifier.moss.PlainsToMoss;
+import com.thelema.thrive.generic.blockentity.modifier.a.rock.Rock;
+import com.thelema.thrive.generic.blockentity.modifier.a.rock.ToRock;
+import com.thelema.thrive.generic.blockentity.modifier.a.sea.Sea;
+import com.thelema.thrive.generic.blockentity.modifier.a.sea.ToSea;
+import com.thelema.thrive.generic.blockentity.modifier.a.sky.Sky;
+import com.thelema.thrive.generic.blockentity.modifier.a.sky.ToSky;
+import com.thelema.thrive.generic.blockentity.modifier.b.cloud.SkyToCloud;
+import com.thelema.thrive.generic.blockentity.modifier.b.garden.ForestToGarden;
+import com.thelema.thrive.generic.blockentity.modifier.b.garden.Garden;
+import com.thelema.thrive.generic.blockentity.modifier.b.moss.Moss;
+import com.thelema.thrive.generic.blockentity.modifier.b.moss.PlainsToMoss;
 import com.thelema.thrive.register.BlockRegister;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -51,10 +57,23 @@ public class BiomeModifierRegistry {
     }
 
     static {
+        // a
+        register("to_rock", List.of(Items.COBBLESTONE), new ToRock());
+        register("to_sea",  List.of(Items.WATER_BUCKET), new ToSea());
+        register("to_sky",  List.of(Items.DIRT),        new ToSky());
+
+        register("rock", List.of(Items.COBBLESTONE, Items.COBBLESTONE), new Rock());
+        register("sea",  List.of(Items.WATER_BUCKET, Items.WATER_BUCKET), new Sea());
+        register("sky",  List.of(Items.DIRT, Items.DIRT), new Sky());
+        // b
         register("plains_to_moss", List.of(Items.MOSS_BLOCK), new PlainsToMoss());
         register("moss", List.of(Items.MOSS_BLOCK), new Moss());
+
         register("forest_to_garden", List.of(Items.HONEY_BLOCK), new ForestToGarden());
         register("garden", List.of(Items.HONEY_BLOCK), new Garden());
-        register("cloud", List.of(BlockRegister.CLOUD.get().asItem()), new SkyToCloud());
+
+        register("sky_to_cloud", List.of(BlockRegister.CLOUD.get().asItem()), new SkyToCloud());
+
+        // c
     }
 }

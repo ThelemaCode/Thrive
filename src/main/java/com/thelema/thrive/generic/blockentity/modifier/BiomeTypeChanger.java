@@ -15,12 +15,16 @@ import java.util.function.Predicate;
 /**
  * SectionApplier 的标准实现：把命中 unit 的群系改写为 target。
  * <p>
- * 源条件由 {@link Predicate} 表达，四种常用场景用静态工厂构造：
- * {@link #of} 指定群系、{@link #any} 任意群系、{@link #fromTag} 标签、
- * {@link #fromVanilla} 原版命名空间。
- * <p>
+ * 源条件由 {@link Predicate} 表达。常用场景用静态工厂，复杂组合用 {@link #of}：
+ * <ul>
+ *     <li>{@link #of} 单群系 / 自定义 Predicate</li>
+ *     <li>{@link #any} 任意群系</li>
+ *     <li>{@link #fromTag} 单标签</li>
+ *     <li>{@link #fromTags} 多标签并集（OR）</li>
+ *     <li>{@link #fromTagExcluding} 标签差集（include 减去 exclude）</li>
+ *     <li>{@link #fromVanilla} 原版命名空间</li>
+ * </ul>
  * 目标自身永不被"源"捕获——即使源条件匹配 target，也不会重复处理。
- * 高频路径上建 {@code static final} 单例，不要每 tick new。
  */
 public final class BiomeTypeChanger implements SectionApplier {
 
@@ -32,22 +36,52 @@ public final class BiomeTypeChanger implements SectionApplier {
         this.target = target;
     }
 
-    /** 源 = 指定群系。 */
+    // ───── 工厂 ─────
+
+    /** 单群系。 */
     public static BiomeTypeChanger of(ResourceKey<Biome> source, ResourceKey<Biome> target) {
         return new BiomeTypeChanger(b -> b.is(source), target);
     }
 
-    /** 源 = 任意群系（旧 null 语义）。 */
+    /** 自定义 Predicate，用于任意复杂组合。 */
+    public static BiomeTypeChanger of(Predicate<Holder<Biome>> sources, ResourceKey<Biome> target) {
+        return new BiomeTypeChanger(sources, target);
+    }
+
+    /** 任意群系。 */
     public static BiomeTypeChanger any(ResourceKey<Biome> target) {
         return new BiomeTypeChanger(b -> true, target);
     }
 
-    /** 源 = 标签内所有群系。 */
+    /** 单标签。 */
     public static BiomeTypeChanger fromTag(TagKey<Biome> tag, ResourceKey<Biome> target) {
         return new BiomeTypeChanger(b -> b.is(tag), target);
     }
 
-    /** 源 = 原版群系（namespace == minecraft）。 */
+    /** 多标签并集：属于任一标签即匹配。 */
+    @SafeVarargs
+    public static BiomeTypeChanger fromTags(ResourceKey<Biome> target, TagKey<Biome>... tags) {
+        return new BiomeTypeChanger(b -> {
+            for (TagKey<Biome> tag : tags)
+                if (b.is(tag)) return true;
+            return false;
+        }, target);
+    }
+
+    /** 标签差集：属于 include，且不属于任一 exclude。 */
+    @SafeVarargs
+    public static BiomeTypeChanger fromTagExcluding(ResourceKey<Biome> target,
+                                                    TagKey<Biome> include,
+                                                    TagKey<Biome>... exclude) {
+        return new BiomeTypeChanger(b -> {
+            if (!b.is(include)) return false;
+            for (TagKey<Biome> tag : exclude)
+                if (b.is(tag)) return false;
+            return true;
+        }, target);
+    }
+
+    /** 原版群系（namespace == minecraft）。 */
     public static BiomeTypeChanger fromVanilla(ResourceKey<Biome> target) {
         return new BiomeTypeChanger(
                 b -> b.unwrapKey()
@@ -55,6 +89,8 @@ public final class BiomeTypeChanger implements SectionApplier {
                         .orElse(false),
                 target);
     }
+
+    // ───── 应用 ─────
 
     @Override
     public void apply(ChunkAccess chunk, int sectionIndex, Set<Integer> units) {

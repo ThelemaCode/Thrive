@@ -1,4 +1,4 @@
-package com.thelema.thrive.generic.blockentity.modifier.cloud;
+package com.thelema.thrive.generic.blockentity.modifier.b.cloud;
 
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
 import com.thelema.thrive.generic.blockentity.modifier.PhasedModifier;

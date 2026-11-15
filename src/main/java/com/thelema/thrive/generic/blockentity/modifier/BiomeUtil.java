@@ -27,6 +27,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.templatesystem.BlockIgnoreProcessor;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -115,17 +116,19 @@ public final class BiomeUtil {
 
     // =======================   叶操作   =====================================
 
-    /**
-     * setBlock + 条件光照刷新。
-     * <p>
-     * 收 {@link LevelAccessor}：运行时（ServerLevel）改方块后按需刷新光照；
-     * 生成阶段（WorldGenRegion）只 setBlock，光照由 chunk 完成时统一算。
-     * <p>
-     * 光照新旧值都在 {@code setBlock} 之前求值，避免依赖邻居的方块拿到错值。
-     */
+    /** 转换用：只 setBlock，不查光照。结束靠 relightArea 兜底。 */
     public static void set(LevelAccessor level, BlockPos p, BlockState s) {
         BlockState old = level.getBlockState(p);
         if (old == s) return;
+        if (old.is(BlockRegister.BIOME_CORE.get())) return;
+        level.setBlock(p, s, 2);
+    }
+
+    /** 交互用：完整光照刷新，用于箱子、开关等需要即时可见的场合。 */
+    public static void setLit(LevelAccessor level, BlockPos p, BlockState s) {
+        BlockState old = level.getBlockState(p);
+        if (old == s) return;
+        if (old.is(BlockRegister.BIOME_CORE.get())) return;
 
         int oldBlock = old.getLightBlock(level, p);
         int oldEmit  = old.getLightEmission(level, p);
@@ -179,6 +182,20 @@ public final class BiomeUtil {
             for (ServerPlayer player : level.getChunkSource().chunkMap.getPlayers(cp, false))
                 player.connection.send(new ClientboundLevelChunkWithLightPacket(lc, level.getLightEngine(), null, null));
         }
+    }
+
+    /** 重算 center 周围 chunkRadius 范围内所有已加载 chunk 的光照。 */
+    public static void relightArea(ServerLevel level, BlockPos center, int chunkRadius) {
+        LevelLightEngine light = level.getLightEngine();
+        int cx = center.getX() >> 4;
+        int cz = center.getZ() >> 4;
+        for (int dx = -chunkRadius; dx <= chunkRadius; dx++)
+            for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
+                ChunkPos cp = new ChunkPos(cx + dx, cz + dz);
+                if (!level.hasChunk(cp.x, cp.z)) continue;
+                light.setLightEnabled(cp, false);
+                light.setLightEnabled(cp, true);
+            }
     }
 
     // =======================   结构替换   =====================================

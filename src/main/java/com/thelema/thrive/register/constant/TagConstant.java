@@ -7,6 +7,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.biome.Biome;
 
 public interface TagConstant {
 
@@ -22,17 +23,22 @@ public interface TagConstant {
     TagKey<DamageType> SLASHING = damage("slashing");
     TagKey<DamageType> WING = damage("wind");
 
+    // 群系
+    TagKey<Biome> IS_LAND = biome("is_land");
 
-
-    static TagKey<Item> item(String name) {
+    private static TagKey<Item> item(String name) {
         return TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
     }
 
-    static TagKey<EntityType<?>> entity(String name){
+    private static TagKey<EntityType<?>> entity(String name) {
         return TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
     }
 
-    static TagKey<DamageType> damage(String name) {
+    private static TagKey<DamageType> damage(String name) {
         return TagKey.create(Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
+    }
+
+    private static TagKey<Biome> biome(String name) {
+        return TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
     }
 }

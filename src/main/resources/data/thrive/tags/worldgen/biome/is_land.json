@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:is_overworld",
+    "thrive:moss",
+    "thrive:garden"
+  ],
+  "remove": [
+    "#minecraft:is_ocean"
+  ]
+}
