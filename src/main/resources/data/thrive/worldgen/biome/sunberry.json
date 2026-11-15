@@ -3,32 +3,24 @@
   "downfall": 0.0,
   "has_precipitation": false,
   "effects": {
+    "sky_color": 12051185,
     "fog_color": 11054005,
+    "water_color": 699829,
+    "water_fog_color": 436118,
+    "grass_color": 10217574,
+    "foliage_color": 7074378,
     "mood_sound": {
       "block_search_extent": 8,
       "offset": 2.0,
       "sound": "minecraft:ambient.cave",
       "tick_delay": 6000
-    },
-    "sky_color": 12051185,
-    "water_color": 699829,
-    "water_fog_color": 436118,
-    "grass_color": 10217574,
-    "foliage_color": 7074378
+    }
   },
   "carvers": {
     "air": []
   },
   "features": [
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
+    [], [], [], [], [], [], [], [], [],
     [
       "minecraft:flower_default",
       "minecraft:flower_flower_forest"
@@ -36,8 +28,7 @@
     []
   ],
   "spawners": {
-    "ambient": [],
-    "axolotls": [],
+    "monster": [],
     "creature": [
       {
         "type": "minecraft:cow",
@@ -46,11 +37,12 @@
         "maxCount": 3
       }
     ],
-    "misc": [],
-    "monster": [],
+    "ambient": [],
+    "axolotls": [],
     "underground_water_creature": [],
+    "water_creature": [],
     "water_ambient": [],
-    "water_creature": []
+    "misc": []
   },
   "spawn_costs": {}
 }

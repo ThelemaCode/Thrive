@@ -3,7 +3,10 @@
   "downfall": 0.8,
   "has_precipitation": true,
   "effects": {
+    "sky_color": 7972607,
     "fog_color": 12638463,
+    "water_color": 4159204,
+    "water_fog_color": 329011,
     "mood_sound": {
       "block_search_extent": 8,
       "offset": 2.0,
@@ -15,24 +18,13 @@
       "min_delay": 12000,
       "replace_current_music": false,
       "sound": "minecraft:music.overworld.forest"
-    },
-    "sky_color": 7972607,
-    "water_color": 4159204,
-    "water_fog_color": 329011
+    }
   },
   "carvers": {
     "air": []
   },
   "features": [
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
-    [],
+    [], [], [], [], [], [], [], [], [],
     [
       "minecraft:flower_default",
       "minecraft:flower_flower_forest"
@@ -40,8 +32,7 @@
     []
   ],
   "spawners": {
-    "ambient": [],
-    "axolotls": [],
+    "monster": [],
     "creature": [
       {
         "type": "minecraft:cow",
@@ -50,11 +41,12 @@
         "maxCount": 3
       }
     ],
-    "misc": [],
-    "monster": [],
+    "ambient": [],
+    "axolotls": [],
     "underground_water_creature": [],
+    "water_creature": [],
     "water_ambient": [],
-    "water_creature": []
+    "misc": []
   },
   "spawn_costs": {}
 }
