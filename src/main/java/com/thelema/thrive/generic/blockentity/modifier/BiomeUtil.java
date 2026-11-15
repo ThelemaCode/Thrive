@@ -11,10 +11,12 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
@@ -198,6 +200,14 @@ public final class BiomeUtil {
         BlockPos toCore = findCoreOffset(to);
         if (toCore == null) return;
         BlockPos toOrigin = corePos.subtract(toCore);
+
+        // 材料消耗前，有容器残留的（如水桶→空桶）原地掉落
+        for (ItemStack stack : be.rotator.items) {
+            ItemStack remainder = stack.getCraftingRemainingItem();
+            if (!remainder.isEmpty()) {
+                Block.popResource(sl, corePos.above(), remainder.copy());
+            }
+        }
 
         be.rotator.clear();   // 材料直接消耗，不保存
 
