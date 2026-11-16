@@ -6,17 +6,20 @@ import net.minecraft.server.level.ServerLevel;
 
 public final class Ring implements PosFinder {
 
-    /** 1 秒 1 环。 */
-    public static final Ring TICK_20 = new Ring(20);
-
 
     private final int interval;
     private final int offsetX;
     private final int offsetZ;
     private final int delay;
 
-    public Ring(int interval) { this(interval, 0, 0, 0); }
-    public Ring(int interval, int offsetX, int offsetZ) { this(interval, offsetX, offsetZ, 0); }
+    public Ring(int interval) {
+        this(interval, 0, 0, 0);
+    }
+
+    public Ring(int interval, int offsetX, int offsetZ) {
+        this(interval, offsetX, offsetZ, 0);
+    }
+
     public Ring(int interval, int offsetX, int offsetZ, int delay) {
         this.interval = interval;
         this.offsetX = offsetX;

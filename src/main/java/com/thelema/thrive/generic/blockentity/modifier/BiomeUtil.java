@@ -210,7 +210,7 @@ public final class BiomeUtil {
     /**
      * 用结构替换 BE，核心对齐，保留地表。
      */
-    public static void replaceStructure(ServerLevel sl, BiomeCoreBlockEntity be, ResourceLocation toId) {
+    public static void placeTree(ServerLevel sl, BiomeCoreBlockEntity be, ResourceLocation toId) {
         StructureTemplate to = sl.getStructureManager().get(toId).orElse(null);
         if (to == null) return;
         BlockPos corePos = be.getBlockPos();

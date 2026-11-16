@@ -3,10 +3,11 @@ package com.thelema.thrive.generic.blockentity.modifier.b.garden;
 import com.thelema.thrive.generic.block.GardenBeeNest;
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
 import com.thelema.thrive.generic.blockentity.GardenBeeNestBlockEntity;
+import com.thelema.thrive.generic.blockentity.modifier.PosApplier;
 import com.thelema.thrive.register.BlockRegister;
+import com.thelema.thrive.register.constant.TagConstant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -28,23 +29,17 @@ import java.util.List;
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
-/**
- * Garden 系转换的共享常量与静态工具。
- */
 final class GardenHelper {
 
-    private GardenHelper() {
-    }
+    private GardenHelper() {}
 
-    // ───── 环与阶段 ─────
     static final int SAND_DEPTH = 9;
-
-    // ───── 造景参数 ─────
     static final int BONE_MEAL_CHANCE = 18;
     static final int TREE_FREE_RADIUS = 7;
     static final int TREE_CHANCE = 50;
 
-    // ───── 资源 ─────
+    static final ResourceKey<Biome> FOREST_SOURCE = ResourceKey.create(
+            Registries.BIOME, ResourceLocation.withDefaultNamespace("forest"));
     static final ResourceKey<Biome> TARGET = ResourceKey.create(
             Registries.BIOME, ResourceLocation.fromNamespaceAndPath("thrive", "garden"));
     static final ResourceLocation TREE_GARDEN =
@@ -64,8 +59,20 @@ final class GardenHelper {
             Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST
     };
 
-    static Holder<Biome> target(ServerLevel level) {
-        return level.registryAccess().lookupOrThrow(Registries.BIOME).getOrThrow(TARGET);
+    // ───── 群系过滤 ─────
+
+    /** 只处理 forest。转化器用。 */
+    static PosApplier onlyForest(PosApplier inner) {
+        return (be, p) -> {
+            if (be.getLevel().getBiome(p).is(FOREST_SOURCE)) inner.apply(be, p);
+        };
+    }
+
+    /** 跳过已是 garden 的坐标。扩散器用。 */
+    static PosApplier skipGarden(PosApplier inner) {
+        return (be, p) -> {
+            if (!be.getLevel().getBiome(p).is(TARGET)) inner.apply(be, p);
+        };
     }
 
     // ───── 清理 ─────
@@ -75,13 +82,10 @@ final class GardenHelper {
         BlockState s = level.getBlockState(p);
         if (s.isAir()) return;
         if (!s.getFluidState().isEmpty()) return;
-        boolean plant = s.is(BlockTags.REPLACEABLE_BY_TREES)
-                || s.is(BlockTags.FLOWERS) || s.is(BlockTags.SAPLINGS);
-        boolean tree = s.is(BlockTags.LOGS) || s.is(BlockTags.LEAVES);
-        boolean hive = s.getBlock() instanceof GardenBeeNest;
-        if (!plant && !tree && !hive) return;
-        set(level, p, Blocks.AIR.defaultBlockState());
-        markDirty(level, p);
+        if (s.is(TagConstant.NATURAL_COVER) || s.getBlock() instanceof GardenBeeNest) {
+            set(level, p, Blocks.AIR.defaultBlockState());
+            markDirty(level, p);
+        }
     }
 
     // ───── 造景 ─────
@@ -132,7 +136,7 @@ final class GardenHelper {
             markDirty(level, d);
     }
 
-    // ───── 辅助（签名不变） ─────
+    // ───── 辅助 ─────
 
     static boolean growFancyOak(ServerLevel level, BlockPos pos) {
         return level.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE)
@@ -142,8 +146,7 @@ final class GardenHelper {
 
     static boolean hasNearbyLogs(ServerLevel level, BlockPos ground, int spacing) {
         for (BlockPos p : BlockPos.betweenClosed(
-                ground.offset(-spacing, 0, -spacing),
-                ground.offset(spacing, 12, spacing)))
+                ground.offset(-spacing, 0, -spacing), ground.offset(spacing, 12, spacing)))
             if (level.getBlockState(p).is(BlockTags.LOGS)) return true;
         return false;
     }

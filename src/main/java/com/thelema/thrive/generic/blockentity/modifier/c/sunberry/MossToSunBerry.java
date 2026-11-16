@@ -4,7 +4,6 @@ import com.thelema.thrive.generic.block.SunBerry;
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
 import com.thelema.thrive.generic.blockentity.modifier.BiomeTypeChanger;
 import com.thelema.thrive.generic.blockentity.modifier.PhasedModifier;
-import com.thelema.thrive.generic.blockentity.modifier.Ring;
 import com.thelema.thrive.register.BlockRegister;
 import com.thelema.thrive.register.FluidRegister;
 import com.thelema.thrive.register.constant.BiomeConstant;
@@ -25,7 +24,8 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
 public class MossToSunBerry extends PhasedModifier {
 
@@ -50,13 +50,13 @@ public class MossToSunBerry extends PhasedModifier {
     private static final BiomeTypeChanger MOSS_TO_SUN_BERRY = BiomeTypeChanger.of(SOURCE, TARGET);
 
     public MossToSunBerry() {
-        addBS(Ring.TICK_20, MOSS_TO_SUN_BERRY);             // REWRITE
-        addPos(Ring.TICK_20, MossToSunBerry::clear);        // CLEAR
-        addPos(Ring.TICK_20, MossToSunBerry::surface);      // SURFACE
-        addPos(Ring.TICK_20, this::lakeDig);                // LAKE_DIG
-        addPos(Ring.TICK_20, this::lakeFill);               // LAKE_FILL
-        addPos(Ring.TICK_20, this::plant);                  // PLANT
-        addFinish(TREE_SUNBERRY);                           // DONE
+        //addBS(Ring.TICK_20, MOSS_TO_SUN_BERRY);             // REWRITE
+        //addPos(Ring.TICK_20, MossToSunBerry::clear);        // CLEAR
+        //addPos(Ring.TICK_20, MossToSunBerry::surface);      // SURFACE
+        //addPos(Ring.TICK_20, this::lakeDig);                // LAKE_DIG
+        //addPos(Ring.TICK_20, this::lakeFill);               // LAKE_FILL
+        //addPos(Ring.TICK_20, this::plant);                  // PLANT
+        //addFinish(TREE_SUNBERRY);                           // DONE
     }
 
     @Override

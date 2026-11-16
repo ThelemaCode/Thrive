@@ -70,7 +70,7 @@ public class PlainsToMoss implements BiomeModifier {
         boolean deco = forPos(be, R_DECO, MossHelper.onlyMoss(MossHelper::deco));
 
         boolean all = rewrite & surface & lake & deco;
-        if (all) replaceStructure((ServerLevel) be.getLevel(), be, MossHelper.TREE_MOSS);
+        if (all) placeTree((ServerLevel) be.getLevel(), be, MossHelper.TREE_MOSS);
         return all;
     }
 

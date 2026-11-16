@@ -4,10 +4,10 @@ import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
 import com.thelema.thrive.generic.blockentity.modifier.PosApplier;
 import com.thelema.thrive.register.BlockRegister;
 import com.thelema.thrive.register.constant.BiomeConstant;
+import com.thelema.thrive.register.constant.TagConstant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -26,29 +26,13 @@ final class RockHelper {
         if (s.isAir()) return;
         if (s.is(BlockRegister.BIOME_CORE.get())) return;
 
-        // 1. 先排除所有“非自然”的功能性方块（箱子、熔炉、潜影盒等）
-        //    这些方块哪怕材质是木头的，也不该被转换。
-        if (s.is(BlockTags.GUARDED_BY_PIGLINS) || s.is(BlockTags.SHULKER_BOXES) || s.is(BlockTags.ANVIL) || s.is(BlockTags.BEACON_BASE_BLOCKS)) {
-            return;
-        }
-
-        // 2. 核心判定：只要属于以下任意“自然方块”类别，就转换为石头
-        boolean isNatural = s.is(BlockTags.DIRT)           // 泥土、草方块、菌丝、苔藓块等
-                || s.is(BlockTags.SAND)                    // 沙子、红沙
-                || s.is(BlockTags.LOGS)                    // 所有原木（含菌柄）
-                || s.is(BlockTags.LEAVES)                  // 所有树叶
-                || s.is(BlockTags.SAPLINGS)                // 树苗
-                || s.is(BlockTags.FLOWERS)                 // 花
-                || s.is(BlockTags.CROPS)                   // 农作物
-                || s.is(BlockTags.REPLACEABLE)             // 可被替换的植物（草、蕨等）
-                || s.is(BlockTags.SNOW)                    // 雪
-                || s.is(BlockTags.ICE)                     // 冰
-                || s.is(Blocks.CLAY) || s.is(Blocks.MUD)   // 黏土、泥巴
-                || s.is(Blocks.DRIPSTONE_BLOCK) || s.is(Blocks.MAGMA_BLOCK) // 滴水石、岩浆块
-                || s.is(Blocks.BONE_BLOCK) || s.is(Blocks.SCULK);   // 骨块、幽匿
-
-        if (isNatural) {
+        if (s.is(TagConstant.NATURAL_SURFACE)) {
+            // 地表层 → 石头
             set(level, p, Blocks.STONE.defaultBlockState());
+            markDirty(level, p);
+        } else if (s.is(TagConstant.NATURAL_COVER)) {
+            // 覆盖层 → 空气
+            set(level, p, Blocks.AIR.defaultBlockState());
             markDirty(level, p);
         }
     }

@@ -9,7 +9,7 @@ import java.util.List;
 
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.forBS;
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.forPos;
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.replaceStructure;
+import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.placeTree;
 
 /**
  * 阶段式 BiomeModifier。
@@ -50,7 +50,7 @@ public abstract class PhasedModifier implements BiomeModifier {
     /** 收尾：替换结构，完成。 */
     protected void addFinish(ResourceLocation structure) {
         addPhase(b -> {
-            replaceStructure((ServerLevel) b.getLevel(), b, structure);
+            placeTree((ServerLevel) b.getLevel(), b, structure);
             return true;
         });
     }

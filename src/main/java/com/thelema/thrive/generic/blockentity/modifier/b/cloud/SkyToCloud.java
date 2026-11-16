@@ -1,10 +1,15 @@
 package com.thelema.thrive.generic.blockentity.modifier.b.cloud;
 
+import com.thelema.thrive.generic.block.Cloud;
 import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
-import com.thelema.thrive.generic.blockentity.modifier.PhasedModifier;
+import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
+import com.thelema.thrive.generic.blockentity.modifier.BiomeTypeChanger;
+import com.thelema.thrive.generic.blockentity.modifier.Ring;
 import com.thelema.thrive.generic.blockentity.modifier.Scattered;
 import com.thelema.thrive.register.BlockRegister;
+import com.thelema.thrive.register.constant.BiomeConstant;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
@@ -12,50 +17,54 @@ import net.minecraft.world.level.block.state.BlockState;
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
 
 /**
- * 天空 → 云。
+ * 天空 → 云（转化器）。
  * <p>
- * 在 BE 的 chunk 覆盖范围（由 {@code be.chunkRadius} 决定）内、
- * y 偏移 ∈ [-4, -2] 的盒里随机撒点，每点生成一朵随机尺寸的云。
- * 每朵 50% 概率是 cloud，50% 是 wispy_cloud。放置时跳过群系核心。
+ * 启动条件：主世界 y >= 200。
+ * 撒云 + 改群系为 cloud，两者都完成后替换结构。
  */
-public class SkyToCloud extends PhasedModifier {
+public class SkyToCloud implements BiomeModifier {
 
-    /** 每批间隔（tick）。20 = 1 秒。 */
     static final int INTERVAL = 20;
-    /** 每批撒 20。 */
     static final int COUNT = 20;
-    /** 共几批。20 × 18 = 360 朵。 */
     static final int PATCH = 18;
 
-    /** 撒点 y 偏移范围（含两端）。 */
     static final int Y_MIN = -4, Y_MAX = -2;
-    /** 云尺寸范围（含两端）：x/z ∈ [4,16]，y ∈ [2,3]。 */
     static final int SIZE_XZ_MIN = 4, SIZE_XZ_MAX = 16;
     static final int SIZE_Y_MIN = 2, SIZE_Y_MAX = 3;
 
-    public SkyToCloud() {
-        addPhase(SkyToCloud::generate);
-    }
+    static final ResourceLocation TREE_CLOUD =
+            ResourceLocation.fromNamespaceAndPath("thrive", "biome_core_tree_cloud");
+
+    private static final BiomeTypeChanger ANY_TO_CLOUD = BiomeTypeChanger.any(BiomeConstant.CLOUD);
+    private static final Ring R_REWRITE = new Ring(20);
 
     @Override
     public boolean canUse(BiomeCoreBlockEntity be) {
-        return true;   // Sky 群系不存在，先不限制
+        if (!(be.getLevel() instanceof ServerLevel)) return false;
+        return be.getBlockPos().getY() >= 200;
     }
 
-    private static boolean generate(BiomeCoreBlockEntity be) {
-        BlockPos base = be.getBlockPos();
-        int cr = 4;
+    @Override
+    public boolean tick(BiomeCoreBlockEntity be) {
+        boolean cloud = clouds(be);
+        boolean rewrite = forBS(be, R_REWRITE, ANY_TO_CLOUD);
+        boolean all = cloud & rewrite;
+        if (all) placeTree((ServerLevel) be.getLevel(), be, TREE_CLOUD);
+        return all;
+    }
 
+    /** 撒云，包内可见，{@link Cloud} 复用。 */
+    static boolean clouds(BiomeCoreBlockEntity be) {
+        BlockPos base = be.getBlockPos();
+        int cr = be.chunkRadius;
         int ox1 = minX(base, cr) - base.getX();
         int ox2 = maxX(base, cr) - base.getX();
         int oz1 = minZ(base, cr) - base.getZ();
         int oz2 = maxZ(base, cr) - base.getZ();
-
         Scattered spots = Scattered.of(ox1, Y_MIN, oz1, ox2, Y_MAX, oz2, INTERVAL, COUNT, PATCH);
         return forPos(be, spots, SkyToCloud::place);
     }
 
-    /** 以 p 为中心填随机尺寸的云，只填空气，跳过 BIOME_CORE。云/薄云各半。 */
     static void place(BiomeCoreBlockEntity be, BlockPos p) {
         ServerLevel level = (ServerLevel) be.getLevel();
         RandomSource rng = level.random;
@@ -73,8 +82,8 @@ public class SkyToCloud extends PhasedModifier {
 
         for (BlockPos q : BlockPos.betweenClosed(p.offset(x0, y0, z0), p.offset(x1, y1, z1))) {
             BlockState cur = level.getBlockState(q);
-            if (!cur.isAir()) continue;                    // 只填空气
-            if (cur.is(BlockRegister.BIOME_CORE.get())) continue;   // 不覆盖核心
+            if (!cur.isAir()) continue;
+            if (cur.is(BlockRegister.BIOME_CORE.get())) continue;
             set(level, q, s);
             markDirty(level, q);
         }

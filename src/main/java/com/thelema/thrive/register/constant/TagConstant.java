@@ -8,11 +8,16 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
 
 public interface TagConstant {
 
     // 物品
     TagKey<Item> HONEY = item("honey");
+
+    // 物品
+    TagKey<Block> NATURAL_SURFACE = block("natural_surface");
+    TagKey<Block> NATURAL_COVER   = block("natural_cover");
 
     // 实体
     TagKey<EntityType<?>> CLOUD = entity("cloud");
@@ -29,6 +34,10 @@ public interface TagConstant {
 
     private static TagKey<Item> item(String name) {
         return TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
+    }
+
+    static TagKey<Block> block(String name) {
+        return TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
     }
 
     private static TagKey<EntityType<?>> entity(String name) {

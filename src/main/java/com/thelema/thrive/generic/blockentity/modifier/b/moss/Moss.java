@@ -40,9 +40,7 @@ public class Moss implements BiomeModifier {
         boolean deco = forPos(be, R_DECO, MossHelper.skipMoss(MossHelper::deco));
         boolean rewrite = forBS(be, R_REWRITE, ANY_TO_MOSS);
 
-        boolean all = prepare & lake & deco & rewrite;
-        if (all) replaceStructure((ServerLevel) be.getLevel(), be, MossHelper.TREE_MOSS);
-        return all;
+        return prepare & lake & deco & rewrite;
     }
 
     // ───── PREPARE：清植被 + 铺 MOSS_BLOCK ─────
