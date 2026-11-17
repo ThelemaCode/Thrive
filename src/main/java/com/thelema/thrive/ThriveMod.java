@@ -40,6 +40,7 @@ public class ThriveMod {
         SoundRegister.register(bus);
         ParticleRegister.register(bus);
         PoiRegister.register(bus);
+        ProcessorRegister.register(bus);
 
 
 
