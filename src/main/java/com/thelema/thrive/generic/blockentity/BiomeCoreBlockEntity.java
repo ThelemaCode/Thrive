@@ -3,7 +3,6 @@ package com.thelema.thrive.generic.blockentity;
 import com.thelema.thrive.generic.blockentity.cap.Rotator;
 import com.thelema.thrive.generic.blockentity.modifier.BiomeModifier;
 import com.thelema.thrive.generic.blockentity.modifier.BiomeModifierRegistry;
-import com.thelema.thrive.generic.blockentity.modifier.BiomeUtil;
 import com.thelema.thrive.register.BlockEntityRegister;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -132,8 +131,6 @@ public class BiomeCoreBlockEntity extends BlockEntity {
             if (c != null && runTick(c, be)) {
                 // 【特效】转换完成时的爆发
                 if (level instanceof ServerLevel sl) {
-                    // 光照重算
-                    BiomeUtil.relightArea(sl, pos, be.chunkRadius);
                     // 生成一圈绿色开心粒子
                     sl.sendParticles(ParticleTypes.HAPPY_VILLAGER,
                             pos.getX() + 0.5, pos.getY() + be.rotator.oy, pos.getZ() + 0.5,

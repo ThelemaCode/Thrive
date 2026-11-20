@@ -126,6 +126,8 @@ public static <B extends Block> DeferredHolder<Block, B> registerWithItem(String
 | 实体 AI（Goal / 控制器 / 导航 / 攻击） | `AI.md` |
 | 添加物品 | `ITEM.md` |
 | 添加方块（无 BE） | `BLOCK.md` |
+| 方块更新 / setBlock flags / 客户端同步 | `SERVER_LEVEL.md` |
+| 添加木制品套装（原木/木板/门/告示牌…） | `WOOD.md` |
 | 添加方块 + 方块实体 | `BLOCK_ENTITY.md` |
 | 添加流体 | `FLUID.md` |
 | 添加状态效果 | `EFFECT.md` |

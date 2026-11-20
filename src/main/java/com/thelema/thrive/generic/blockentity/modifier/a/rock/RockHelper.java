@@ -11,9 +11,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Block;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
 final class RockHelper {
 
@@ -28,12 +27,10 @@ final class RockHelper {
 
         if (s.is(TagConstant.NATURAL_SURFACE)) {
             // 地表层 → 石头
-            set(level, p, Blocks.STONE.defaultBlockState());
-            markDirty(level, p);
+            level.setBlock(p, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         } else if (s.is(TagConstant.NATURAL_COVER)) {
             // 覆盖层 → 空气
-            set(level, p, Blocks.AIR.defaultBlockState());
-            markDirty(level, p);
+            level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
     }
 

@@ -22,7 +22,32 @@
   "block.thrive.lantern_berry_peel": "灯笼浆果皮",
   "block.thrive.cloud": "云块",
   "block.thrive.wispy_cloud": "稀松云块",
+  "block.thrive.salt_block": "盐块",
+  "block.thrive.alkali_block": "碱块",
+  "block.thrive.desert_poplar_leaves": "胡杨树叶",
+  "block.thrive.desert_poplar_sapling": "胡杨树苗",
+  "block.thrive.desert_poplar_log": "胡杨原木",
+  "block.thrive.desert_poplar_wood": "胡杨木",
+  "block.thrive.stripped_desert_poplar_log": "去皮胡杨原木",
+  "block.thrive.stripped_desert_poplar_wood": "去皮胡杨木",
+  "block.thrive.desert_poplar_planks": "胡杨木板",
+  "block.thrive.desert_poplar_stairs": "胡杨木楼梯",
+  "block.thrive.desert_poplar_slab": "胡杨木台阶",
+  "block.thrive.desert_poplar_button": "胡杨木按钮",
+  "block.thrive.desert_poplar_pressure_plate": "胡杨木压力板",
+  "block.thrive.desert_poplar_fence": "胡杨木栅栏",
+  "block.thrive.desert_poplar_fence_gate": "胡杨木栅栏门",
+  "block.thrive.desert_poplar_door": "胡杨木门",
+  "block.thrive.desert_poplar_trapdoor": "胡杨木活板门",
+  "block.thrive.desert_poplar_sign": "胡杨木告示牌",
+  "block.thrive.desert_poplar_wall_sign": "胡杨木墙告示牌",
+  "block.thrive.desert_poplar_hanging_sign": "悬挂式胡杨木告示牌",
+  "block.thrive.desert_poplar_wall_hanging_sign": "悬挂式胡杨木墙告示牌",
+  "block.thrive.potted_desert_poplar_sapling": "胡杨树苗盆栽",
+  "block.thrive.dust_block": "尘土块",
 
+  "item.thrive.desert_poplar_boat": "胡杨木船",
+  "item.thrive.desert_poplar_chest_boat": "胡杨木运输船",
 
   "itemGroup.thrive": "繁荣",
 
@@ -32,6 +57,9 @@
   "item.thrive.moss_cod": "苔藓鳕鱼",
   "item.thrive.breeze_fish": "旋风鱼",
   "item.thrive.sky_water_bucket": "天空水桶",
+  "item.thrive.salt": "盐",
+  "item.thrive.alkali": "碱",
+
 
   "item.thrive.mossy_zombie_spawn_egg": "苔藓僵尸 刷怪蛋",
   "item.thrive.lantern_berry_creeper_spawn_egg": "灯笼果苦力怕 刷怪蛋",
@@ -95,6 +123,9 @@
   "effect.thrive.blinding": "炫目",
   "effect.thrive.milk": "牛奶",
   "effect.thrive.moss": "苔藓",
+  "effect.thrive.alkaline_burn": "碱质灼烧",
+  "effect.thrive.dehydration": "脱水",
+
 
   "biome.thrive.sky": "天空",
   "biome.thrive.rock": "岩石圈",
@@ -114,7 +145,7 @@
   "entity.thrive.vortex_breeze": "涡流旋风",
   "entity.thrive.sun": "太阳",
   "entity.thrive.primed_sun_berry": "点燃的太阳浆果",
-  "entity.thrive.bait_area": "鱼饵区域",
+  "entity.thrive.diffusion_zone": "扩散物区域",
 
 
 

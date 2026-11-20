@@ -6,9 +6,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Block;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
 final class SkyHelper {
 
@@ -26,7 +25,6 @@ final class SkyHelper {
         if (s.isAir()) return;
         if (s.is(BlockRegister.BIOME_CORE.get())) return;
         if (!isSkyPlant(s)) return;
-        set(level, p, Blocks.AIR.defaultBlockState());
-        markDirty(level, p);
+        level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
     }
 }

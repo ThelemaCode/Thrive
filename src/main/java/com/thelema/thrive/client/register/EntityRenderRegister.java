@@ -10,7 +10,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
-@EventBusSubscriber
+@EventBusSubscriber(value = Dist.CLIENT)
 @OnlyIn(Dist.CLIENT)
 public class EntityRenderRegister {
 
@@ -25,7 +25,9 @@ public class EntityRenderRegister {
         e.registerEntityRenderer(EntityRegister.GARDEN_PILLAGER.get(), GardenPillagerRenderer::new);
         e.registerEntityRenderer(EntityRegister.SUN.get(), SunRenderer::new);
         e.registerEntityRenderer(EntityRegister.VORTEX_BREEZE.get(), BreezeCoreRenderer::new);
-        e.registerEntityRenderer(EntityRegister.BAIT_AREA.get(), NoopRenderer::new);
+        e.registerEntityRenderer(EntityRegister.DIFFUSION_ZONE.get(), NoopRenderer::new);
+        e.registerEntityRenderer(EntityRegister.DESERT_POPLAR_BOAT.get(), ctx -> new ThriveBoatRenderer(ctx, false));
+        e.registerEntityRenderer(EntityRegister.DESERT_POPLAR_CHEST_BOAT.get(), ctx -> new ThriveBoatRenderer(ctx, true));
     }
 
     @SubscribeEvent

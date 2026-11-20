@@ -4,8 +4,12 @@ import com.thelema.thrive.generic.blockentity.BiomeCoreBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
+/**
+ * 以切比雪夫壳，环形遍历，有偏移，有延迟，
+ * 可用于改变群系，
+ * 但遍历范围的全部坐标，较贵。
+ * */
 public final class Ring implements PosFinder {
-
 
     private final int interval;
     private final int offsetX;

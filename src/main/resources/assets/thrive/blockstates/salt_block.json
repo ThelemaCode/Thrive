@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "thrive:block/salt_block"
+    }
+  }
+}

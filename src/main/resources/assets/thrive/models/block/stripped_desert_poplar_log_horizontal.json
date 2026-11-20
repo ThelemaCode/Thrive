@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column_horizontal",
+  "textures": {
+    "end": "thrive:block/stripped_desert_poplar_log_top",
+    "side": "thrive:block/stripped_desert_poplar_log"
+  }
+}

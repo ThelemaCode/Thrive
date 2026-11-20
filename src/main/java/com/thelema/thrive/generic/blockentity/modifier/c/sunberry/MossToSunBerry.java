@@ -23,9 +23,8 @@ import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.world.level.block.Block;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
 public class MossToSunBerry extends PhasedModifier {
 
@@ -50,13 +49,13 @@ public class MossToSunBerry extends PhasedModifier {
     private static final BiomeTypeChanger MOSS_TO_SUN_BERRY = BiomeTypeChanger.of(SOURCE, TARGET);
 
     public MossToSunBerry() {
-        //addBS(Ring.TICK_20, MOSS_TO_SUN_BERRY);             // REWRITE
-        //addPos(Ring.TICK_20, MossToSunBerry::clear);        // CLEAR
-        //addPos(Ring.TICK_20, MossToSunBerry::surface);      // SURFACE
-        //addPos(Ring.TICK_20, this::lakeDig);                // LAKE_DIG
-        //addPos(Ring.TICK_20, this::lakeFill);               // LAKE_FILL
-        //addPos(Ring.TICK_20, this::plant);                  // PLANT
-        //addFinish(TREE_SUNBERRY);                           // DONE
+        //addPhase(be -> forBS(be, Ring.TICK_20, MOSS_TO_SUN_BERRY));             // REWRITE
+        //addPhase(MossToSunBerry::clear);        // CLEAR
+        //addPhase(MossToSunBerry::surface);      // SURFACE
+        //addPhase(this::lakeDig);                // LAKE_DIG
+        //addPhase(this::lakeFill);               // LAKE_FILL
+        //addPhase(this::plant);                  // PLANT
+        //addPhase(be -> { placeTree((ServerLevel) be.getLevel(), be, TREE_SUNBERRY); return true; });                           // DONE
     }
 
     @Override
@@ -96,8 +95,7 @@ public class MossToSunBerry extends PhasedModifier {
                 || s.is(BlockRegister.LANTERN_BERRY.get());
         if (!oak && !azalea && !plant) return;
 
-        set(level, p, Blocks.AIR.defaultBlockState());
-        markDirty(level, p);
+        level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
     }
 
     // ─── 阶段 2：地表 ───
@@ -108,8 +106,7 @@ public class MossToSunBerry extends PhasedModifier {
         BlockState s = level.getBlockState(p);
 
         if (!s.getFluidState().isEmpty()) {
-            set(level, p, Blocks.AIR.defaultBlockState());
-            markDirty(level, p);
+            level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             return;
         }
         if (!s.is(Blocks.GRASS_BLOCK) && !s.is(BlockTags.DIRT) && !s.is(Blocks.MOSS_BLOCK)) return;
@@ -125,8 +122,7 @@ public class MossToSunBerry extends PhasedModifier {
         boolean nearSurface = p.getY() >= topY - 4 && p.getY() <= topY;
         if (!sideExposed && !nearSurface) return;
 
-        set(level, p, BlockRegister.LANTERN_BERRY_PEEL.get().defaultBlockState());
-        markDirty(level, p);
+        level.setBlock(p, BlockRegister.LANTERN_BERRY_PEEL.get().defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
     }
 
     // ─── 阶段 3：挖湖 ───
@@ -142,8 +138,7 @@ public class MossToSunBerry extends PhasedModifier {
         lakeTop.put(col, topY);
         for (int y = topY - 1; y >= topY - LAKE_DEPTH; y--) {
             BlockPos q = new BlockPos(p.getX(), y, p.getZ());
-            set(level, q, Blocks.AIR.defaultBlockState());
-            markDirty(level, q);
+            level.setBlock(q, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
     }
 
@@ -164,8 +159,7 @@ public class MossToSunBerry extends PhasedModifier {
 
         // 湖底
         BlockPos bottom = new BlockPos(p.getX(), topY - LAKE_DEPTH - 1, p.getZ());
-        set(level, bottom, peel);
-        markDirty(level, bottom);
+        level.setBlock(bottom, peel, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
 
         // 侧壁
         for (int y = topY - 1; y >= topY - LAKE_DEPTH; y--) {
@@ -174,16 +168,14 @@ public class MossToSunBerry extends PhasedModifier {
                 if (isLakePos(n)) continue;
                 BlockState ns = level.getBlockState(n);
                 if (ns.isAir() || !ns.getFluidState().isEmpty()) continue;
-                set(level, n, peel);
-                markDirty(level, n);
+                level.setBlock(n, peel, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             }
         }
 
         // 灌汁：底壁已就位，此刻灌 source 方块
         for (int y = topY - 1; y >= topY - LAKE_DEPTH; y--) {
             BlockPos q = new BlockPos(p.getX(), y, p.getZ());
-            set(level, q, juice);
-            markDirty(level, q);
+            level.setBlock(q, juice, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
     }
 
@@ -203,13 +195,11 @@ public class MossToSunBerry extends PhasedModifier {
         RandomSource random = level.random;
         if (random.nextInt(SUN_BERRY_CHANCE) == 0) {
             if (SunBerry.tryPlaceSunBerry(level, above.above())) {
-                markDirty(level, above);
                 return;
             }
         }
         if (random.nextInt(LANTERN_BERRY_CHANCE) == 0) {
-            set(level, above, BlockRegister.LANTERN_BERRY.get().defaultBlockState());
-            markDirty(level, above);
+            level.setBlock(above, BlockRegister.LANTERN_BERRY.get().defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
     }
 

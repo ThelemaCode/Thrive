@@ -91,11 +91,25 @@ public class EntityRegister {
                     .sized(1.0f, 1.0f)
                     .build("vortex_breeze"));
 
-    public static final DeferredHolder<EntityType<?>, EntityType<BaitArea>> BAIT_AREA =
-            ENTITIES.register("bait_area", () -> EntityType.Builder
-                    .of(BaitArea::new, MobCategory.MISC)
+    public static final DeferredHolder<EntityType<?>, EntityType<DiffusionZone>> DIFFUSION_ZONE =
+            ENTITIES.register("diffusion_zone", () -> EntityType.Builder
+                    .of(DiffusionZone::new, MobCategory.MISC)
                     .sized(1.0F, 1.0F)
-                    .build("bait_area"));
+                    .build("diffusion_zone"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ThriveBoat>> DESERT_POPLAR_BOAT =
+            ENTITIES.register("desert_poplar_boat", () -> EntityType.Builder
+                    .<ThriveBoat>of(ThriveBoat::new, MobCategory.MISC)
+                    .sized(1.375F, 0.5625F)
+                    .clientTrackingRange(10)
+                    .build("desert_poplar_boat"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ThriveChestBoat>> DESERT_POPLAR_CHEST_BOAT =
+            ENTITIES.register("desert_poplar_chest_boat", () -> EntityType.Builder
+                    .<ThriveChestBoat>of(ThriveChestBoat::new, MobCategory.MISC)
+                    .sized(1.375F, 0.5625F)
+                    .clientTrackingRange(10)
+                    .build("desert_poplar_chest_boat"));
 
     public static void register(IEventBus bus) {
         ENTITIES.register(bus);
@@ -120,6 +134,7 @@ public class EntityRegister {
         event.register(GARDEN_PILLAGER.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
         event.register(GARDEN_WITCH.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
         event.register(VORTEX_BREEZE.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mob::checkMobSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        event.register(EntityType.BREEZE, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mob::checkMobSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
     }
 
     // 允许一些生物生成在草丛，地毯这些地方

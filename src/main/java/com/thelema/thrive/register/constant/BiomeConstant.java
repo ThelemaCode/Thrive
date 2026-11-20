@@ -15,10 +15,13 @@ public interface BiomeConstant {
     ResourceKey<Biome> SKY = biome("sky");
     ResourceKey<Biome> SEA = biome("sea");
 
-
+    // I
     ResourceKey<Biome> GARDEN = biome("garden");
     ResourceKey<Biome> MOSS = biome("moss");
     ResourceKey<Biome> CLOUD = biome("cloud");
+    ResourceKey<Biome> TUGAI = biome("tugai");
+
+    // II
     ResourceKey<Biome> SUNBERRY = biome("sunberry");
 
     private static ResourceKey<Biome> biome(String name){

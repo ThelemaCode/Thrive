@@ -7,9 +7,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Block;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
 final class SeaHelper {
 
@@ -22,8 +21,7 @@ final class SeaHelper {
         BlockState to = p.getY() < level.getSeaLevel()
                 ? Blocks.WATER.defaultBlockState()
                 : Blocks.AIR.defaultBlockState();
-        set(level, p, to);
-        markDirty(level, p);
+        level.setBlock(p, to, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
     }
 
     static void clear(BiomeCoreBlockEntity be, BlockPos p) {

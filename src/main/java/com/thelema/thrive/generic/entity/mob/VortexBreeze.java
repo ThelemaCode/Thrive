@@ -181,7 +181,7 @@ public class VortexBreeze extends Mob implements GeoEntity {
 
         // ── 调用工具类：施加风场引力 ──
         // 半径 R，水平力 0.6，垂直上浮力 0.15
-        WindUtil.attractEntities(this, R, 0.6, 0.15);
+        WindUtil.attractEntities(this, R, 0.6, 0.0);
 
         // ── 伤害判定：每秒执行一次 ──
         if (this.tickCount % 20 == 0) {

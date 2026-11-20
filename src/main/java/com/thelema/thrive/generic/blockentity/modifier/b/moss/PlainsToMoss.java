@@ -82,15 +82,13 @@ public class PlainsToMoss implements BiomeModifier {
             BlockState s = sl.getBlockState(p);
             if (s.isAir()) return;
             if (REMOVE.contains(s.getBlock())) {
-                set(sl, p, Blocks.AIR.defaultBlockState());
-                markDirty(sl, p);
+                sl.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
                 return;
             }
             if (!REPLACEABLE.contains(s.getBlock())) return;
             if (sl.getBlockState(p.above()).isAir()
                     || sl.getBlockState(p.below()).isAir()) {
-                set(sl, p, Blocks.MOSS_BLOCK.defaultBlockState());
-                markDirty(sl, p);
+                sl.setBlock(p, Blocks.MOSS_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             }
         }
     }

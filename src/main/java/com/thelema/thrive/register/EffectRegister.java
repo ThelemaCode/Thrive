@@ -23,6 +23,8 @@ public class EffectRegister {
     public static final DeferredHolder<MobEffect, Blinding> BLINDING = EFFECT.register("blinding", Blinding::new);
     public static final DeferredHolder<MobEffect, Milk> MILK = EFFECT.register("milk", Milk::new);
     public static final DeferredHolder<MobEffect, Moss> MOSS = EFFECT.register("moss", Moss::new);
+    public static final DeferredHolder<MobEffect, AlkalineBurn> ALKALINE_BURN = EFFECT.register("alkaline_burn", AlkalineBurn::new);
+    public static final DeferredHolder<MobEffect, Dehydration> DEHYDRATION = EFFECT.register("dehydration", Dehydration::new);
 
 
 }

@@ -8,6 +8,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 
@@ -41,11 +42,19 @@ public class ThriveMod {
         ParticleRegister.register(bus);
         PoiRegister.register(bus);
         ProcessorRegister.register(bus);
+        TrunkPlacerRegister.register(bus);
 
 
 
 
         cont.registerConfig(ModConfig.Type.COMMON, ThriveConfig.SPEC);
+
+        // 燃烧属性要等方块都注册完，才能往 FireBlock 的表里塞
+        bus.addListener(ThriveMod::commonSetup);
+    }
+
+    private static void commonSetup(FMLCommonSetupEvent event) {
+        BlockRegister.registerFlammables();
     }
 
     static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();

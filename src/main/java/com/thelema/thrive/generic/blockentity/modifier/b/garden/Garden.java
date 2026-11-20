@@ -15,8 +15,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.forBS;
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.forPos;
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
+import net.minecraft.world.level.block.Block;
 
 /**
  * 花园扩散器：BE 已在 garden 群系，向外扩张。不替换结构。
@@ -62,24 +61,20 @@ public class Garden implements BiomeModifier {
 
         int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, p.getX(), p.getZ());
         if (p.getY() >= surfaceY - 1 && level.getBlockState(p.above()).isAir()) {
-            set(level, p, Blocks.GRASS_BLOCK.defaultBlockState());
-            markDirty(level, p);
+            level.setBlock(p, Blocks.GRASS_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             return;
         }
 
         if (hasAirSide(level, p)) {
-            set(level, p, Blocks.DIRT.defaultBlockState());
-            markDirty(level, p);
+            level.setBlock(p, Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             return;
         }
         int depth = level.getHeight(Heightmap.Types.WORLD_SURFACE, p.getX(), p.getZ()) - p.getY();
         if (depth < 1 || depth > GardenHelper.SAND_DEPTH) return;
         if (s.is(BlockTags.SAND)) {
-            set(level, p, Blocks.DIRT.defaultBlockState());
-            markDirty(level, p);
+            level.setBlock(p, Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         } else if (s.is(Blocks.SANDSTONE) || s.is(Blocks.RED_SANDSTONE)) {
-            set(level, p, Blocks.STONE.defaultBlockState());
-            markDirty(level, p);
+            level.setBlock(p, Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
     }
 

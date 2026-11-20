@@ -13,10 +13,6 @@ import java.util.Set;
 
 public class Moss extends MobEffect {
 
-    private static final int INTERVAL = 20;
-    private static final int REGEN_DURATION = 40;
-    private static final int AMP = 3;        // IV
-    private static final int AMP_BUFFED = 7; // VIII
 
     public Moss() {
         super(MobEffectCategory.BENEFICIAL, 0x4A7C3F);
@@ -28,7 +24,7 @@ public class Moss extends MobEffect {
 
     @Override
     public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-        return duration % INTERVAL == 0;
+        return duration % 20 == 0;
     }
 
     @Override
@@ -39,8 +35,8 @@ public class Moss extends MobEffect {
             return true;
         }
         // 有浆果汁时提升到 VIII 级
-        int amp = entity.hasEffect(EffectRegister.LANTERN_BERRY_JUICE) ? AMP_BUFFED : AMP;
-        entity.addEffect(new MobEffectInstance(MobEffects.REGENERATION, REGEN_DURATION, amp, true, true));
+        int amp = entity.hasEffect(EffectRegister.LANTERN_BERRY_JUICE) ? 7 : 3;
+        entity.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 40, amp, true, true));
         return true;
     }
 

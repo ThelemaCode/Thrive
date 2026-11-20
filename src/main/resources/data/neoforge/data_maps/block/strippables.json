@@ -1,0 +1,10 @@
+{
+  "values": {
+    "thrive:desert_poplar_log": {
+      "stripped_block": "thrive:stripped_desert_poplar_log"
+    },
+    "thrive:desert_poplar_wood": {
+      "stripped_block": "thrive:stripped_desert_poplar_wood"
+    }
+  }
+}

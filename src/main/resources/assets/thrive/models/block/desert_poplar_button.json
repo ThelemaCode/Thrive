@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/button",
+  "textures": {
+    "texture": "thrive:block/desert_poplar_planks"
+  }
+}

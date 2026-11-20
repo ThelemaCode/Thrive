@@ -5,21 +5,16 @@ import com.thelema.thrive.register.BlockRegister;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.SectionPos;
-import net.minecraft.core.Vec3i;
-import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -42,7 +37,7 @@ public final class BiomeUtil {
     private BiomeUtil() {}
 
     /** 全局待重发 chunk，按维度隔离。 */
-    private static final Map<ResourceKey<Level>, Set<Long>> DIRTY = new ConcurrentHashMap<>();
+    private static final Map<ResourceKey<Level>, Set<Long>> BIOME_DIRTY = new ConcurrentHashMap<>();
 
     // =======================   生命周期   =====================================
 
@@ -77,7 +72,7 @@ public final class BiomeUtil {
             touched.computeIfAbsent(ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4), x -> new HashMap<>())
                     .computeIfAbsent(si, x -> new HashSet<>()).add(idx);
         });
-        for (Long chunkKey : touched.keySet()) markDirtyChunk(sl, chunkKey);
+        for (Long chunkKey : touched.keySet()) markBiomeDirty(sl, chunkKey);
         for (var ce : touched.entrySet()) {
             ChunkPos cp = new ChunkPos(ce.getKey());
             ChunkAccess chunk = sl.getChunk(cp.x, cp.z, ChunkStatus.FULL, false);
@@ -87,9 +82,29 @@ public final class BiomeUtil {
         return done;
     }
 
+    /** 跳过已是 key 群系的坐标 */
+    public static PosApplier skip(ResourceKey<Biome> key,PosApplier inner) {
+        return (be, p) -> {
+            if (be.getLevel() instanceof ServerLevel sl && sl.getBiome(p).is(key)) return;
+            inner.apply(be, p);
+        };
+    }
+
+    /** 只处理已是 key 群系的坐标 */
+    public static PosApplier only(ResourceKey<Biome> key,PosApplier inner) {
+        return (be, p) -> {
+            if (be.getLevel() instanceof ServerLevel sl && sl.getBiome(p).is(key)){
+                inner.apply(be, p);
+            }
+        };
+    }
+
+
+    // =======================   群系数据同步   =====================================
+
     /** 改写 section 内命中 unit 的群系。 */
-    public static void applyBiomeSection(ChunkAccess chunk, int sectionIndex, Set<Integer> units,
-                                         Holder<Biome> target, Predicate<Holder<Biome>> shouldReplace) {
+    static void applyBiomeSection(ChunkAccess chunk, int sectionIndex, Set<Integer> units,
+                                  Holder<Biome> target, Predicate<Holder<Biome>> shouldReplace) {
         LevelChunkSection section = chunk.getSection(sectionIndex);
         var old = section.getBiomes();
         Holder<Biome>[] cache = new Holder[64];
@@ -114,63 +129,39 @@ public final class BiomeUtil {
         chunk.setUnsaved(true);
     }
 
-    // =======================   叶操作   =====================================
-
-    /** 转换用：只 setBlock，不查光照。结束靠 relightArea 兜底。 */
-    public static void set(LevelAccessor level, BlockPos p, BlockState s) {
-        BlockState old = level.getBlockState(p);
-        if (old == s) return;
-        if (old.is(BlockRegister.BIOME_CORE.get())) return;
-        level.setBlock(p, s, 2);
-    }
-
-    /** 交互用：完整光照刷新，用于箱子、开关等需要即时可见的场合。 */
-    public static void setLit(LevelAccessor level, BlockPos p, BlockState s) {
-        BlockState old = level.getBlockState(p);
-        if (old == s) return;
-        if (old.is(BlockRegister.BIOME_CORE.get())) return;
-
-        int oldBlock = old.getLightBlock(level, p);
-        int oldEmit  = old.getLightEmission(level, p);
-        int newBlock = s.getLightBlock(level, p);
-        int newEmit  = s.getLightEmission(level, p);
-
-        level.setBlock(p, s, 2);
-
-        if (level instanceof ServerLevel sl && (oldBlock != newBlock || oldEmit != newEmit))
-            sl.getLightEngine().checkBlock(p);
-    }
-
-    /** 取当前维度的 dirty 集合。 */
-    private static Set<Long> dirtySet(ServerLevel level) {
-        return DIRTY.computeIfAbsent(level.dimension(), k -> ConcurrentHashMap.newKeySet());
-    }
-
-    /** 标记方块所在 chunk 待重发。只入 set，发送由 {@link #onTick} 统一做。 */
-    public static void markDirty(ServerLevel level, BlockPos p) {
-        dirtySet(level).add(ChunkPos.asLong(p.getX() >> 4, p.getZ() >> 4));
-    }
-
-    /** 按 chunk key 直接标记待重发。 */
-    private static void markDirtyChunk(ServerLevel level, long chunkKey) {
-        dirtySet(level).add(chunkKey);
-    }
-
-    /** 每 5 tick 全局 flush 一次。 */
-    @SubscribeEvent
-    public static void onTick(ServerTickEvent.Post e) {
-        if (e.getServer().getTickCount() % 5 != 0) return;
-        for (ServerLevel level : e.getServer().getAllLevels()) flush(level);
+    /** 取当前维度的「群系待重发」集合。 */
+    private static Set<Long> biomeDirtySet(ServerLevel level) {
+        return BIOME_DIRTY.computeIfAbsent(level.dimension(), k -> ConcurrentHashMap.newKeySet());
     }
 
     /**
-     * 重发该维度所有 dirty chunk。
-     * <p>
-     * 未加载的 chunk 不 remove，留在 set 里等加载后再发——
-     * 若直接丢弃，玩家走远再回来会看到旧光照。
+     * 标记某个 chunk 的群系变了、待重发。
+     *
+     * <p>只有群系改动需要它：方块改动走 {@code setBlock} 自带的 section 包，
+     * 客户端会自己重建那一个 section。
      */
-    public static void flush(ServerLevel level) {
-        Set<Long> set = DIRTY.get(level.dimension());
+    private static void markBiomeDirty(ServerLevel level, long chunkKey) {
+        biomeDirtySet(level).add(chunkKey);
+    }
+
+    /** 每 10 tick（0.5 秒）给每个维度发一个 chunk 的群系包。 */
+    @SubscribeEvent
+    public static void onTick(ServerTickEvent.Post e) {
+        if (e.getServer().getTickCount() % 10 != 0) return;
+        for (ServerLevel level : e.getServer().getAllLevels()) flushOne(level);
+    }
+
+    /**
+     * 发一个 chunk 的群系更新，然后返回。
+     *
+     * <p>用 {@code ClientboundChunksBiomesPacket}（只含群系，不含方块与光照），
+     * 但客户端收到后会把该 chunk 及周围 3×3 的所有 section 标脏重建——
+     * 所以一次只发一个，81 个 chunk 约 40 秒铺完，玩家完全无感。
+     *
+     * <p>未加载的 chunk 留在集合里，等加载后再发。
+     */
+    public static void flushOne(ServerLevel level) {
+        Set<Long> set = BIOME_DIRTY.get(level.dimension());
         if (set == null || set.isEmpty()) return;
         var iter = set.iterator();
         while (iter.hasNext()) {
@@ -179,8 +170,8 @@ public final class BiomeUtil {
             ChunkAccess chunk = level.getChunk(cp.x, cp.z, ChunkStatus.FULL, false);
             if (!(chunk instanceof LevelChunk lc)) continue;   // 未加载，下轮再试
             iter.remove();
-            for (ServerPlayer player : level.getChunkSource().chunkMap.getPlayers(cp, false))
-                player.connection.send(new ClientboundLevelChunkWithLightPacket(lc, level.getLightEngine(), null, null));
+            level.getChunkSource().chunkMap.resendBiomesForChunks(List.of(lc));
+            return;
         }
     }
 
@@ -229,16 +220,12 @@ public final class BiomeUtil {
         be.rotator.clear();   // 材料直接消耗，不保存
 
         to.placeInWorld(sl, toOrigin, toOrigin, new StructurePlaceSettings()
-                        .setRotation(Rotation.getRandom(sl.random)).setMirror(Mirror.NONE)
+                        .setRotation(Rotation.getRandom(sl.random))
+                        .setMirror(Mirror.NONE)
+                        .setRotationPivot(toCore)
                         .setIgnoreEntities(false).addProcessor(BlockIgnoreProcessor.AIR),
                 sl.random, 50);
 
-        Vec3i size = to.getSize();
-        for (BlockPos p : BlockPos.betweenClosed(toOrigin,
-                toOrigin.offset(size.getX() - 1, size.getY() - 1, size.getZ() - 1))) {
-            sl.getLightEngine().checkBlock(p);
-            markDirty(sl, p);
-        }
     }
 
     // =======================   边界判断   =====================================

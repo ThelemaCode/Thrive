@@ -15,6 +15,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
+import net.minecraft.world.level.block.Block;
 
 /**
  * 天空 → 云（转化器）。
@@ -84,8 +85,7 @@ public class SkyToCloud implements BiomeModifier {
             BlockState cur = level.getBlockState(q);
             if (!cur.isAir()) continue;
             if (cur.is(BlockRegister.BIOME_CORE.get())) continue;
-            set(level, q, s);
-            markDirty(level, q);
+            level.setBlock(q, s, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
     }
 }

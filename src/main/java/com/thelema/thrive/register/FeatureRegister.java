@@ -16,7 +16,6 @@ public class FeatureRegister {
         FEATURE.register(bus);
     }
 
-    public static final DeferredHolder<Feature<?>, Lake> LAKE =
-            FEATURE.register("lake", () -> new Lake(Lake.LakeConfig.CODEC));
+    public static final DeferredHolder<Feature<?>, Lake> LAKE = FEATURE.register("lake", () -> new Lake(Lake.LakeConfig.CODEC));
 }
 

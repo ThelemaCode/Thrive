@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.thelema.thrive.MixinTool;
 import com.thelema.thrive.ThriveMod;
-import com.thelema.thrive.generic.entity.misc.BaitArea;
+import com.thelema.thrive.generic.entity.misc.DiffusionZone;
 import com.thelema.thrive.generic.entity.mob.VortexBreeze;
 import com.thelema.thrive.generic.fishing.FishingRuleLoader;
 import net.minecraft.core.registries.Registries;
@@ -83,13 +83,13 @@ public abstract class FishingHookMixin {
 
         // 获取鱼饵
         AABB area = AABB.ofSize(hook.position(), 13.0, 13.0, 13.0);
-        BaitArea nearestBaitArea = serverLevel.getEntitiesOfClass(BaitArea.class, area)
+        DiffusionZone nearestDiffusionZone = serverLevel.getEntitiesOfClass(DiffusionZone.class, area)
                 .stream()
                 .min(Comparator.comparingDouble(e -> e.distanceToSqr(hook)))
                 .orElse(null);
 
-        String ba = (nearestBaitArea != null && nearestBaitArea.baitItemId != null)
-                ? nearestBaitArea.baitItemId.toString() : null;
+        String ba = (nearestDiffusionZone != null && nearestDiffusionZone.diffusateItemId != null)
+                ? nearestDiffusionZone.diffusateItemId.toString() : null;
 
         // 2. 遍历规则并寻找最优解
         JsonObject bestMatch = null;

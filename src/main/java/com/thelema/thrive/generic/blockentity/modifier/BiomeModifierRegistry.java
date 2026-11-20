@@ -12,6 +12,8 @@ import com.thelema.thrive.generic.blockentity.modifier.b.garden.ForestToGarden;
 import com.thelema.thrive.generic.blockentity.modifier.b.garden.Garden;
 import com.thelema.thrive.generic.blockentity.modifier.b.moss.Moss;
 import com.thelema.thrive.generic.blockentity.modifier.b.moss.PlainsToMoss;
+import com.thelema.thrive.generic.blockentity.modifier.b.tugai.DesertToTugai;
+import com.thelema.thrive.generic.blockentity.modifier.b.tugai.Tugai;
 import com.thelema.thrive.register.BlockRegister;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -74,6 +76,8 @@ public class BiomeModifierRegistry {
 
         register("sky_to_cloud", List.of(BlockRegister.CLOUD.get().asItem()), new SkyToCloud());
 
+        register("desert_to_tugai", List.of(Items.OAK_SAPLING), new DesertToTugai());
+        register("tugai", List.of(Items.OAK_SAPLING), new Tugai());
         // c
     }
 }

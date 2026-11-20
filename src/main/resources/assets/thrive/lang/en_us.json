@@ -20,6 +20,32 @@
   "block.thrive.lantern_berry_peel": "Lantern Berry Peel",
   "block.thrive.cloud": "Cloud",
   "block.thrive.wispy_cloud": "Wispy Cloud",
+  "block.thrive.salt_block": "Salt Block",
+  "block.thrive.alkali_block": "Alkali Block",
+  "block.thrive.desert_poplar_leaves": "Desert Poplar Leaves",
+  "block.thrive.desert_poplar_sapling": "Desert Poplar Sapling",
+  "block.thrive.desert_poplar_log": "Desert Poplar Log",
+  "block.thrive.desert_poplar_wood": "Desert Poplar Wood",
+  "block.thrive.stripped_desert_poplar_log": "Stripped Desert Poplar Log",
+  "block.thrive.stripped_desert_poplar_wood": "Stripped Desert Poplar Wood",
+  "block.thrive.desert_poplar_planks": "Desert Poplar Planks",
+  "block.thrive.desert_poplar_stairs": "Desert Poplar Stairs",
+  "block.thrive.desert_poplar_slab": "Desert Poplar Slab",
+  "block.thrive.desert_poplar_button": "Desert Poplar Button",
+  "block.thrive.desert_poplar_pressure_plate": "Desert Poplar Pressure Plate",
+  "block.thrive.desert_poplar_fence": "Desert Poplar Fence",
+  "block.thrive.desert_poplar_fence_gate": "Desert Poplar Fence Gate",
+  "block.thrive.desert_poplar_door": "Desert Poplar Door",
+  "block.thrive.desert_poplar_trapdoor": "Desert Poplar Trapdoor",
+  "block.thrive.desert_poplar_sign": "Desert Poplar Sign",
+  "block.thrive.desert_poplar_wall_sign": "Desert Poplar Wall Sign",
+  "block.thrive.desert_poplar_hanging_sign": "Desert Poplar Hanging Sign",
+  "block.thrive.desert_poplar_wall_hanging_sign": "Desert Poplar Wall Hanging Sign",
+  "block.thrive.potted_desert_poplar_sapling": "Potted Desert Poplar Sapling",
+  "block.thrive.dust_block": "Dust Block",
+
+  "item.thrive.desert_poplar_boat": "Desert Poplar Boat",
+  "item.thrive.desert_poplar_chest_boat": "Desert Poplar Chest Boat",
 
 
 
@@ -31,6 +57,8 @@
   "item.thrive.moss_cod": "Moss Cod",
   "item.thrive.breeze_fish": "Breeze Fish",
   "item.thrive.sky_water_bucket": "Sky Water Bucket",
+  "item.thrive.salt": "Salt",
+  "item.thrive.alkali": "Alkali",
 
 
   "item.thrive.mossy_zombie_spawn_egg": "Mossy Zombie Spawn Egg",
@@ -96,6 +124,8 @@
   "effect.thrive.blinding": "Blinding",
   "effect.thrive.milk": "Milk",
   "effect.thrive.moss": "Moss",
+  "effect.thrive.alkaline_burn": "Alkaline Burn",
+  "effect.thrive.dehydration": "Dehydration",
 
   "biome.thrive.sky": "Sky",
   "biome.thrive.rock": "Rock",
@@ -115,7 +145,7 @@
   "entity.thrive.vortex_breeze": "Vortex Breeze",
   "entity.thrive.garden_witch": "Garden Witch",
   "entity.thrive.primed_sun_berry": "Primed Sun Berry",
-  "entity.thrive.bait_area": "Bait Area",
+  "entity.thrive.diffusion_zone": "Diffusion Zone",
 
 
   "subtitles.thrive.sun_berry_ignite": "Sun Berry ignites",

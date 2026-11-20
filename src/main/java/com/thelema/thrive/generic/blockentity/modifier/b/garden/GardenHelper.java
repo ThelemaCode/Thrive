@@ -26,8 +26,6 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
 final class GardenHelper {
 
@@ -83,8 +81,7 @@ final class GardenHelper {
         if (s.isAir()) return;
         if (!s.getFluidState().isEmpty()) return;
         if (s.is(TagConstant.NATURAL_COVER) || s.getBlock() instanceof GardenBeeNest) {
-            set(level, p, Blocks.AIR.defaultBlockState());
-            markDirty(level, p);
+            level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
     }
 
@@ -107,8 +104,6 @@ final class GardenHelper {
 
         BlockPos base = p.above();
         if (!growFancyOak(level, base)) return;
-        for (BlockPos d : BlockPos.betweenClosed(base.offset(-3, -1, -3), base.offset(3, 12, 3)))
-            markDirty(level, d);
         plantFlowerCluster(level, base, random);
         hangGardenHive(level, base, random);
     }
@@ -132,8 +127,6 @@ final class GardenHelper {
         if (!bonemealable.isValidBonemealTarget(level, p, s)) return;
         if (!bonemealable.isBonemealSuccess(level, random, p, s)) return;
         bonemealable.performBonemeal(level, random, p, s);
-        for (BlockPos d : BlockPos.betweenClosed(p.offset(-2, 0, -2), p.offset(2, 2, 2)))
-            markDirty(level, d);
     }
 
     // ───── 辅助 ─────
@@ -165,14 +158,13 @@ final class GardenHelper {
         if (flower == Blocks.LILAC || flower == Blocks.PEONY
                 || flower == Blocks.ROSE_BUSH || flower == Blocks.SUNFLOWER) {
             if (!level.getBlockState(p.above()).isAir()) return;
-            set(level, p, flower.defaultBlockState()
-                    .setValue(DoublePlantBlock.HALF, DoubleBlockHalf.LOWER));
-            set(level, p.above(), flower.defaultBlockState()
-                    .setValue(DoublePlantBlock.HALF, DoubleBlockHalf.UPPER));
+            level.setBlock(p, flower.defaultBlockState()
+                    .setValue(DoublePlantBlock.HALF, DoubleBlockHalf.LOWER), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            level.setBlock(p.above(), flower.defaultBlockState()
+                    .setValue(DoublePlantBlock.HALF, DoubleBlockHalf.UPPER), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         } else {
-            set(level, p, flower.defaultBlockState());
+            level.setBlock(p, flower.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
-        markDirty(level, p);
     }
 
     static void hangGardenHive(ServerLevel level, BlockPos base, RandomSource random) {
@@ -189,9 +181,8 @@ final class GardenHelper {
             if (open.isEmpty()) continue;
             Direction facing = open.get(random.nextInt(open.size()));
             BlockPos hivePos = trunk.relative(facing);
-            set(level, hivePos, BlockRegister.GARDEN_BEE_NEST.get().defaultBlockState()
-                    .setValue(GardenBeeNest.FACING, facing));
-            markDirty(level, hivePos);
+            level.setBlock(hivePos, BlockRegister.GARDEN_BEE_NEST.get().defaultBlockState()
+                    .setValue(GardenBeeNest.FACING, facing), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             if (level.getBlockEntity(hivePos) instanceof GardenBeeNestBlockEntity hive) {
                 for (int i = 0, n = 1 + random.nextInt(2); i < n; i++)
                     hive.storeBee(GardenBeeNestBlockEntity.Occupant.create(random.nextInt(599)));

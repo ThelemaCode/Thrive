@@ -21,6 +21,7 @@
     "EntityMixin",
     "EntityAccessor",
     "LivingEntityMixin",
+    "MobEffectInstanceAccessor",
     "FlintAndSteelItemMixin"
   ],
   "client": [

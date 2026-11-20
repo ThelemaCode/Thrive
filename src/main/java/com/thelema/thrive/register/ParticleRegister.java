@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import com.thelema.thrive.ThriveMod;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -41,6 +42,9 @@ public class ParticleRegister {
                     return ColorParticleOption.streamCodec(this);
                 }
             });
+
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DESERT_POPLAR_LEAVES =
+            PARTICLE_TYPES.register("desert_poplar_leaves", () -> new SimpleParticleType(false));
 
     public static void register(IEventBus bus) {
         PARTICLE_TYPES.register(bus);

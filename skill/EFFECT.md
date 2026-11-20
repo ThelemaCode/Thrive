@@ -243,6 +243,59 @@ public class InstantHeal extends MobEffect {
 
 ## 七、属性修改器
 
+### 7.0 为什么 `-1` 会自动变成「每级 -1」
+
+这是最容易懵的一点：**你只写了一个数，等级缩放是框架替你做的**，不用自己写 `for` 循环、也不要在 `applyEffectTick` 里改血量。
+
+完整链路（全部源码核对过）：
+
+```java
+// 1) 你写的这一行：只是"存起来"，没有任何效果
+public MobEffect addAttributeModifier(Holder<Attribute> attribute, ResourceLocation id,
+                                     double amount, AttributeModifier.Operation operation) {
+    this.attributeModifiers.put(attribute, new AttributeTemplate(id, amount, operation, null));
+    return this;
+}
+
+// 2) 真正决定"每级多少"的地方
+public record AttributeTemplate(ResourceLocation id, double amount,
+                                AttributeModifier.Operation operation,
+                                @Nullable Int2DoubleFunction curve) {
+    public AttributeModifier create(int level) {                 // level 就是 amplifier
+        if (curve != null)                                       // NeoForge 重载：自定义曲线
+            return new AttributeModifier(this.id, this.curve.apply(level), this.operation);
+        // ↓ 乘 (amplifier + 1)，这就是"每级"的来源
+        return new AttributeModifier(this.id, this.amount * (double)(level + 1), this.operation);
+    }
+}
+```
+
+```java
+// 3) 谁来调 create()
+LivingEntity.addEffect(instance)
+├─ 首次添加 → onEffectAdded(instance)
+│    └ effect.addAttributeModifiers(this.getAttributes(), instance.getAmplifier())
+│         └ attributeInstance.addPermanentModifier(template.create(amplifier))
+└─ 已有同种效果且 update() 返回 true → onEffectUpdated(instance, forced = true)
+     ├ effect.removeAttributeModifiers(attributes)              // 先按 id 删掉旧的
+     ├ effect.addAttributeModifiers(attributes, 新 amplifier)    // 再按新等级加
+     └ refreshDirtyAttributes()
+```
+
+所以 `-1.0` 的实际值：
+
+| `amount` | amplifier | 实际修改值 |
+|---|---|---|
+| `-1.0` | `0`（I 级） | `-1` |
+| `-1.0` | `1`（II 级） | `-2` |
+| `-1.0` | `4`（V 级） | `-5` |
+
+**三条必须记住的推论**：
+
+1. `amount` 的语义是「**每级**的值」，不是总量。
+2. **不是累加**。换级时先 `removeModifier(id)` 再 `addPermanentModifier`，同一时刻只有「当前等级」那一个修改器生效。
+3. `attributeModifiers` 的 **key 是属性**：一个效果对同一个属性只能挂一个修改器（后写覆盖先写）。跨效果靠 `id` 区分，**`id` 撞了会互相顶掉**。
+
 ### 7.1 `MobEffect.addAttributeModifier`
 
 ```java
@@ -271,6 +324,24 @@ addAttributeModifier(Holder<Attribute> attribute, ResourceLocation id,
 - `curve == null`：`new AttributeModifier(id, amount * (level + 1), operation)`，默认线性。
 - `level` 传入的是 amplifier，0 表示 I 级。
 
+### 7.2.1 拿 `MAX_HEALTH` 做「减血上限」的三个坑
+
+以 `AlkalineBurn`（`-1.0`，`ADD_VALUE`，作用于 `Attributes.MAX_HEALTH`）为例：
+
+| 现象 | 原因 |
+|---|---|
+| 上限压不到 0，人不会因为这个死 | `MAX_HEALTH` 是 `RangedAttribute(20.0, 1.0, 1024.0)`，`sanitizeValue` 把下限钳在 **1** |
+| 加上效果瞬间「掉血」 | 上限下降后 `refreshDirtyAttributes → onAttributeUpdated` 会 `setHealth(maxHealth)` 把当前血量钳到新上限 |
+| 效果结束后上限回来了，血却没回来 | 移除只删修改器，**不会回血**；要回血得自己 `entity.heal(...)` 或等自然恢复 |
+
+想要别的量级/形状：
+
+| 目标 | 写法 |
+|---|---|
+| 每级 -10% 基础值 | `ADD_MULTIPLIED_BASE` + `-0.1`（`-0.1 × (amp+1)` 是基础值的百分比） |
+| 非线性（如每级 -1、-3、-6…） | NeoForge 重载 `addAttributeModifier(attr, id, op, Int2DoubleFunction)`，`curve.apply(amplifier)` 直接给值 |
+| **持续掉血** | 别用属性修改器，在 `applyEffectTick` 里 `entity.hurt(...)` |
+
 ### 7.3 `AttributeInstance` 的 permanent vs transient
 
 `LivingEntity.onEffectAdded` / `onEffectUpdated(forced=true)` 调用 `MobEffect.addAttributeModifiers`，内部用 `AttributeInstance.addPermanentModifier`：
@@ -293,7 +364,130 @@ addAttributeModifier(Holder<Attribute> attribute, ResourceLocation id,
 
 **纯客户端 HUD 效果**，与效果逻辑、服务端无关。
 
-## 八、材质
+## 八、治疗物（EffectCure）
+
+### 8.1 它是什么
+
+`EffectCure` **不是物品**，是一个「疗程标签」——就是一个字符串单例。原版只有三个：
+
+| 常量 | 名字 | 谁触发 |
+|---|---|---|
+| `EffectCures.MILK` | `milk` | 喝牛奶 |
+| `EffectCures.HONEY` | `honey` | 喝蜂蜜瓶（原版只对**中毒**生效） |
+| `EffectCures.PROTECTED_BY_TOTEM` | `protected_by_totem` | 不死图腾生效时 |
+
+它**不是注册表**：
+
+```java
+private static final Map<String, EffectCure> CURES = new ConcurrentHashMap<>();
+public static EffectCure get(String name) {          // 懒创建 + 记忆
+    return CURES.computeIfAbsent(name, EffectCure::new);
+}
+```
+
+所以「同名 = 同一个 cure」，跨 mod 会撞车——自定义名带上命名空间，例如 `thrive:alkali`。
+
+### 8.2 一个效果「能不能被治好」是怎么判定的
+
+三条链，缺一不可：
+
+**① 构造实例时把 cure 缓存进去**
+
+```java
+// MobEffectInstance 构造器最后一行
+this.effect.value().fillEffectCures(this.cures, this);
+```
+
+`fillEffectCures` 是 NeoForge 打在 `IMobEffectExtension` 上的 default 方法：
+
+```java
+default void fillEffectCures(Set<EffectCure> cures, MobEffectInstance effectInstance) {
+    cures.addAll(EffectCures.DEFAULT_CURES);                        // milk + protected_by_totem
+    if (this.self() == MobEffects.POISON.value()) cures.add(EffectCures.HONEY);
+}
+```
+
+> **这就是为什么你什么都没写，喝牛奶却能把效果解掉。**
+> 任何效果默认都属于 `milk` 和 `protected_by_totem`。
+
+**② 治疗物去调 `removeEffectsCuredBy`**
+
+```java
+// MilkBucketItem.finishUsingItem
+if (!level.isClientSide) entityLiving.removeEffectsCuredBy(EffectCures.MILK);
+
+// HoneyBottleItem.finishUsingItem
+if (!level.isClientSide) entityLiving.removeEffectsCuredBy(EffectCures.HONEY);
+
+// LivingEntity.checkTotemDeathProtection
+this.removeEffectsCuredBy(EffectCures.PROTECTED_BY_TOTEM);
+```
+
+**③ 真正移除**
+
+```java
+public boolean removeEffectsCuredBy(EffectCure cure) {
+    if (this.level().isClientSide) return false;
+    for (MobEffectInstance effect : this.activeEffects.values())
+        if (effect.getCures().contains(cure)
+            && !EventHooks.onEffectRemoved(this, effect, cure)) {   // 走 MobEffectEvent.Remove
+            this.onEffectRemoved(effect);
+            itr.remove();
+            ...
+        }
+}
+```
+
+移除走 `MobEffectEvent.Remove`，此时 `getCure()` 非空，**事件可取消**。
+
+### 8.3 加一个自己的治疗物
+
+**第一步：定义 cure**（放在效果类里最省事）
+
+```java
+public static final EffectCure ALKALI = EffectCure.get("thrive:alkali");
+```
+
+**第二步：改写效果的 cure 集合**
+
+```java
+@Override
+public void fillEffectCures(Set<EffectCure> cures, MobEffectInstance effectInstance) {
+    cures.clear();              // 不想被牛奶/图腾解掉，就必须清掉默认值
+    cures.add(ALKALI);
+    // 想保留牛奶：别 clear，改成 super.fillEffectCures(cures, effectInstance);
+}
+```
+
+**第三步：让物品去治**
+
+```java
+public class AlkaliNeutralizerItem extends Item {
+    @Override
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
+        if (!level.isClientSide) {
+            entity.removeEffectsCuredBy(AlkalineBurn.ALKALI);
+        }
+        return super.finishUsingItem(stack, level, entity);
+    }
+}
+```
+
+不是饮用物品也行——喷溅药水、图腾、方块交互、`LivingEntity#removeEffectsCuredBy` 直接调，都是同一个入口。
+
+### 8.4 注意事项
+
+| 事项 | 说明 |
+|---|---|
+| 缓存时机 | `cures` 在**实例构造时**填好；之后改代码 / 改注册都不影响已存在的实例，重进世界重建才生效 |
+| 只对活体 | 是 `LivingEntity` 的方法；对 `MobEffectInstance` 直接 `removeEffect` 不经过 cure |
+| 纯服务端 | 客户端调用直接 `return false`，不需要同步代码 |
+| `clear()` 与 `super` | 覆盖 `fillEffectCures` 时**不调用 super 就没有默认的牛奶/图腾**，这是最容易忘的一步 |
+| 一个效果多个 cure | 集合，随便加；`contains` 判断，顺序无关 |
+| 单个实例定制 | `MobEffectInstance.Details` 里有 `neoforge:cures` 字段（可序列化），能给某一次施加的实例单独挂 cure，一般用不到 |
+| 与 `Milk` 效果无关 | 项目里的 `generic/effect/Milk.java` 是个普通效果，和 `EffectCures.MILK` 不是一回事 |
+
+## 九、材质
 
 每个效果需要一张 **16×16 PNG**：
 
@@ -315,7 +509,7 @@ assets/thrive/textures/mob_effect/<注册名>.png
 
 **图标颜色由 PNG 自己决定**，和构造器里的颜色值无关——那个值是粒子色。
 
-## 九、语言文件
+## 十、语言文件
 
 `assets/thrive/lang/{en_us,zh_cn}.json`：
 
@@ -326,20 +520,30 @@ assets/thrive/textures/mob_effect/<注册名>.png
 
 键格式：`effect.<命名空间>.<注册名>`。
 
-## 十、清单
+## 十一、清单
 
 | 文件 | 改动 |
 |---|---|
 | `register/EffectRegister.java` | `EFFECT.register("xxx", Xxx::new)` |
 | `generic/effect/Xxx.java` | 继承 `MobEffect`，按需覆写 tick / 事件 / 属性修改器 |
+| `generic/effect/Xxx.java` | 自定义治疗物时覆写 `fillEffectCures` |
+| 治疗物品（可选） | `finishUsingItem` 里 `entity.removeEffectsCuredBy(cure)` |
 | `assets/thrive/textures/mob_effect/xxx.png` | 16×16 图标 |
 | `assets/thrive/lang/{en_us,zh_cn}.json` | `effect.thrive.xxx` |
 | `ThriveMod.java` | `EffectRegister.register(bus)` |
 
-## 十一、常见坑
+## 十二、常见坑
 
 | 坑 | 症状 |
 |---|---|
+| 以为 `addAttributeModifier` 的 `amount` 是总量 | 实际是**每级**值，框架乘 `(amplifier + 1)`；等级越高效果越强，以为是重复叠加 |
+| 自己再在 `applyEffectTick` 里改血量来做「每级」 | 和属性修改器重复计算，数值翻倍 |
+| 以为属性修改器能把人压死 | `MAX_HEALTH` 下限是 1，压不到 0 |
+| 以为效果结束血量会回满 | 只恢复上限，不回当前血量 |
+| 效果被牛奶莫名解掉 | `fillEffectCures` 默认加了 `milk` / `protected_by_totem`，要独占必须 `cures.clear()` |
+| 覆写 `fillEffectCures` 没调 super | 默认的牛奶/图腾全部丢失（有时正是想要的，注意是主动选择） |
+| `EffectCure.get("alkali")` 不带命名空间 | 和其它 mod 同名 cure 撞车，互相治疗 |
+| 给已存在的实例改 cure | 不生效，cure 在实例构造时就缓存了 |
 | 忘了 `shouldApplyEffectTickThisTick` | `applyEffectTick` 永不执行 |
 | `applyEffectTick` 返回 `false` | 立即 `removeEffect`，走 `Remove` 事件（可取消）；不是等下一 tick |
 | 以为 `applyEffectTick` 返回 false 走 `Expired` | 实际走 `Remove`；`Expired` 只用于持续时间耗尽 |

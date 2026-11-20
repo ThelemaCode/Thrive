@@ -21,8 +21,22 @@ public class BlockEntityRegister {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BiomeCoreBlockEntity>> BIOME_CORE;
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SunBerryBlockEntity>> SUN_BERRY;
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GardenBeeNestBlockEntity>> GARDEN_BEE_NEST;
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ThriveSignBlockEntity>> THRIVE_SIGN;
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ThriveHangingSignBlockEntity>> THRIVE_HANGING_SIGN;
 
     static {
+
+        THRIVE_SIGN = BLOCK_ENTITY.register("thrive_sign", () -> BlockEntityType.Builder
+                .of(ThriveSignBlockEntity::new,
+                        BlockRegister.DESERT_POPLAR_SIGN.get(),
+                        BlockRegister.DESERT_POPLAR_WALL_SIGN.get())
+                .build(null));
+
+        THRIVE_HANGING_SIGN = BLOCK_ENTITY.register("thrive_hanging_sign", () -> BlockEntityType.Builder
+                .of(ThriveHangingSignBlockEntity::new,
+                        BlockRegister.DESERT_POPLAR_HANGING_SIGN.get(),
+                        BlockRegister.DESERT_POPLAR_WALL_HANGING_SIGN.get())
+                .build(null));
 
         SUN_BERRY = BLOCK_ENTITY.register("sun_berry", () -> BlockEntityType.Builder
                 .of(SunBerryBlockEntity::new, BlockRegister.SUN_BERRY.get())

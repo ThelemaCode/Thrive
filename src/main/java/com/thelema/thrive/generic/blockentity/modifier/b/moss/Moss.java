@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.*;
+import net.minecraft.world.level.block.Block;
 
 public class Moss implements BiomeModifier {
 
@@ -63,8 +64,7 @@ public class Moss implements BiomeModifier {
                     || s.is(BlockRegister.LANTERN_BERRY.get());
             boolean tree = s.is(BlockTags.LOGS) || s.is(BlockTags.LEAVES);
             if (!plant && !tree) return;
-            set(sl, p, Blocks.AIR.defaultBlockState());
-            markDirty(sl, p);
+            sl.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
 
     }
@@ -77,8 +77,7 @@ public class Moss implements BiomeModifier {
             if (s.isAir() || !s.getFluidState().isEmpty()) return;
             if (!MossHelper.isNaturalTerrain(s)) return;
             if (!sl.getBlockState(p.above()).isAir()) return;
-            set(sl, p, Blocks.MOSS_BLOCK.defaultBlockState());
-            markDirty(sl, p);
+            sl.setBlock(p, Blocks.MOSS_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
         }
     }
 }

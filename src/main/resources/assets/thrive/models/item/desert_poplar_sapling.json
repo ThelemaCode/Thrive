@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "thrive:block/desert_poplar_sapling"
+  }
+}

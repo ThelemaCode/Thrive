@@ -2,6 +2,7 @@ package com.thelema.thrive.client.register;
 
 import com.thelema.thrive.ThriveMod;
 import com.thelema.thrive.client.particle.ColoredExplosionParticle;
+import com.thelema.thrive.client.particle.DesertPoplarLeafParticle;
 import com.thelema.thrive.client.particle.ExplosionEmitterParticle;
 import com.thelema.thrive.register.ParticleRegister;
 import net.neoforged.api.distmarker.Dist;
@@ -19,6 +20,9 @@ public class ParticleProviderRegister {
 
         // 燃爆爆炸粒子投射粒子
         event.registerSpecial(ParticleRegister.COLORED_EXPLOSION_EMITTER.get(), new ExplosionEmitterParticle.Provider(ParticleRegister.COLORED_EXPLOSION.get()));
+
+        // 胡杨落叶粒子
+        event.registerSpriteSet(ParticleRegister.DESERT_POPLAR_LEAVES.get(), DesertPoplarLeafParticle.Provider::new);
 
     }
 }

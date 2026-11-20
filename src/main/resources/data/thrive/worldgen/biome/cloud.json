@@ -1,6 +1,6 @@
 {
   "temperature": 0.8,
-  "downfall": 0.4,
+  "downfall": 0.0,
   "has_precipitation": false,
   "effects": {
     "sky_color": 7907327,
@@ -13,19 +13,11 @@
   "carvers": {},
   "features": [
     [], [], [], [], [], [], [], [], [],
-    [
-      "minecraft:freeze_top_layer"
-    ],
+    [],
     []
   ],
   "spawners": {
     "monster": [
-      {
-        "type": "thrive:converge_breeze",
-        "weight": 10,
-        "minCount": 1,
-        "maxCount": 1
-      },
       {
         "type": "minecraft:breeze",
         "weight": 15,
@@ -33,7 +25,14 @@
         "maxCount": 4
       }
     ],
-    "creature": [],
+    "creature": [
+      {
+        "type": "thrive:vortex_breeze",
+        "weight": 10,
+        "minCount": 1,
+        "maxCount": 1
+      }
+    ],
     "ambient": [],
     "axolotls": [],
     "underground_water_creature": [],

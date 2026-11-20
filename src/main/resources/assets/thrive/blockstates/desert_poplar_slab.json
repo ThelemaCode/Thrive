@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "thrive:block/desert_poplar_slab"
+    },
+    "type=double": {
+      "model": "thrive:block/desert_poplar_planks"
+    },
+    "type=top": {
+      "model": "thrive:block/desert_poplar_slab_top"
+    }
+  }
+}

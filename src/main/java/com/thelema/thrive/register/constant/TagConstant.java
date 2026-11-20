@@ -9,18 +9,20 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
 
 public interface TagConstant {
 
     // 物品
     TagKey<Item> HONEY = item("honey");
 
-    // 物品
+    // 方块
     TagKey<Block> NATURAL_SURFACE = block("natural_surface");
     TagKey<Block> NATURAL_COVER   = block("natural_cover");
 
     // 实体
     TagKey<EntityType<?>> CLOUD = entity("cloud");
+    TagKey<EntityType<?>> IMMUNE_DEHYDRATION = entity("immune_dehydration");
 
     // 伤害
     TagKey<DamageType> BLUNT = damage("blunt");
@@ -31,6 +33,9 @@ public interface TagConstant {
     // 群系
     TagKey<Biome> IS_LAND = biome("is_land");
     TagKey<Biome> IS_OCEAN = biome("is_ocean");
+
+    // 流体
+    TagKey<Fluid> CAN_SALINISE = fluid("can_salinise");
 
     private static TagKey<Item> item(String name) {
         return TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
@@ -50,5 +55,9 @@ public interface TagConstant {
 
     private static TagKey<Biome> biome(String name) {
         return TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
+    }
+
+    private static TagKey<Fluid> fluid(String name) {
+        return TagKey.create(Registries.FLUID, ResourceLocation.fromNamespaceAndPath(ThriveMod.MOD_ID, name));
     }
 }

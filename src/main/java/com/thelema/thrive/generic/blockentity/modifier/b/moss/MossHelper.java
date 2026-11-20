@@ -20,8 +20,6 @@ import net.minecraft.world.level.block.DoublePlantBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.markDirty;
-import static com.thelema.thrive.generic.blockentity.modifier.BiomeUtil.set;
 
 final class MossHelper {
 
@@ -104,6 +102,7 @@ final class MossHelper {
     /** 在 moss 表面随机放一盏灯笼莓汁湖。群系判断由调用方包装。 */
     static void lake(BiomeCoreBlockEntity be, BlockPos p) {
         ServerLevel level = (ServerLevel) be.getLevel();
+        assert level != null;
         if (!level.getBlockState(p).isAir()) return;
         if (!level.getBlockState(p.below()).is(Blocks.MOSS_BLOCK)) return;
         if (level.random.nextInt(4) != 0) return;
@@ -146,15 +145,13 @@ final class MossHelper {
         if (veg == Blocks.TALL_GRASS) {
             BlockPos above = p.above();
             if (!level.getBlockState(above).isAir()) return;
-            set(level, p, Blocks.TALL_GRASS.defaultBlockState()
-                    .setValue(DoublePlantBlock.HALF, DoubleBlockHalf.LOWER));
-            set(level, above, Blocks.TALL_GRASS.defaultBlockState()
-                    .setValue(DoublePlantBlock.HALF, DoubleBlockHalf.UPPER));
-            markDirty(level, p);
+            level.setBlock(p, Blocks.TALL_GRASS.defaultBlockState()
+                    .setValue(DoublePlantBlock.HALF, DoubleBlockHalf.LOWER), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            level.setBlock(above, Blocks.TALL_GRASS.defaultBlockState()
+                    .setValue(DoublePlantBlock.HALF, DoubleBlockHalf.UPPER), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             return;
         }
-        set(level, p, veg.defaultBlockState());
-        markDirty(level, p);
+        level.setBlock(p, veg.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
     }
 
     static void placeCaveVine(ServerLevel level, RandomSource random, BlockPos ceiling) {
@@ -168,16 +165,14 @@ final class MossHelper {
             BlockState vine = (i == 0 ? Blocks.CAVE_VINES_PLANT : Blocks.CAVE_VINES)
                     .defaultBlockState()
                     .setValue(CaveVines.BERRIES, berries);
-            set(level, pos, vine);
-            markDirty(level, pos);
+            level.setBlock(pos, vine, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             last = pos;
         }
 
         if (random.nextInt(3) == 0) {
             BlockPos below = last.below();
             if (level.getBlockState(below).isAir()) {
-                set(level, below, BlockRegister.LANTERN_BERRY.get().defaultBlockState());
-                markDirty(level, below);
+                level.setBlock(below, BlockRegister.LANTERN_BERRY.get().defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             }
         }
     }
