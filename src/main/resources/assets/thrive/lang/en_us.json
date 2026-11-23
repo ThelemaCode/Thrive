@@ -124,7 +124,7 @@
   "effect.thrive.blinding": "Blinding",
   "effect.thrive.milk": "Milk",
   "effect.thrive.moss": "Moss",
-  "effect.thrive.alkaline_burn": "Alkaline Burn",
+  "effect.thrive.saponification": "Saponification",
   "effect.thrive.dehydration": "Dehydration",
 
   "biome.thrive.sky": "Sky",
@@ -146,6 +146,8 @@
   "entity.thrive.garden_witch": "Garden Witch",
   "entity.thrive.primed_sun_berry": "Primed Sun Berry",
   "entity.thrive.diffusion_zone": "Diffusion Zone",
+  "entity.thrive.alkaline_zombie": "Alkaline Zombie",
+  "entity.thrive.salt_skeleton": "Salt Skeleton",
 
 
   "subtitles.thrive.sun_berry_ignite": "Sun Berry ignites",

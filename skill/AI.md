@@ -149,7 +149,119 @@ public enum Flag { MOVE, LOOK, JUMP, TARGET; }
 
 ---
 
-## 6. 攻击 doHurtTarget
+## 6. 移动速度：参数含义、乘数关系与参考值
+
+### 6.1 一句话
+
+`navigation.moveTo(target, x)` 和 `moveControl.setWantedPosition(..., x)` 里的 **x 是乘数，不是速度值，也不会覆盖属性**。
+真正进入 `LivingEntity.getSpeed()` 的是：
+
+```
+getSpeed() = MOVEMENT_SPEED属性 × x
+```
+
+源码调用链：
+
+```java
+PathNavigation.moveTo(Entity, double speed)      { this.speedModifier = speed; }
+// 每 tick：
+this.mob.getMoveControl().setWantedPosition(x, y, z, this.speedModifier);
+MoveControl.tick()  // MOVE_TO 分支
+    this.mob.setSpeed((float)(this.speedModifier * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
+Mob.setSpeed(float s) { super.setSpeed(s); this.setZza(s); }        // ← 关键：同时写 zza
+LivingEntity.travel(Vec3)                                          // 才真正位移
+    this.moveRelative(this.getFrictionInfluencedSpeed(f), travelVector);
+```
+
+### 6.2 为什么速度是“平方关系”（最容易踩的坑）
+
+`Mob.setSpeed(s)` 把 `s` **同时**写进 `speed` 和 `zza`；`travel` 里 `moveRelative(amount = speed, relative = (xxa, yya, zza))`，
+`getInputVector` 先按向量长度归一化（长度 > 1 才归一），再乘 `amount`。
+
+所以当 `s ≤ 1` 时，每 tick 的速度增量 ∝ `s²`，稳态速度也 ∝ `s²`：
+
+```
+地面、默认摩擦 0.6：  格/秒 ≈ 44 × s²          (s = 属性 × 导航系数，s ≤ 1)
+                    长度 > 1 后归一化，变成 44 × s（线性）
+```
+
+**玩家不适用这个公式**：玩家的 `zza` 来自键盘输入（±1），所以速度 ∝ `属性 × 1`，`0.1 → 4.32 格/秒`（步行）。
+这也是为什么“同样 0.1，玩家比怪快得多”。
+
+### 6.3 换算表（地面、默认摩擦，导航系数 1.0）
+
+| 属性值 s | 约格/秒 | 参照 |
+|---|---|---|
+| `0.23` | 2.3 | 原版僵尸 |
+| `0.25` | 2.8 | 骷髅 / 苦力怕 / 铁傀儡 / 女巫 |
+| `0.28` | 3.4 | 比僵尸快 50% |
+| `0.30` | 4.0 | 蜘蛛 / 末影人，≈ 玩家步行（4.32） |
+| `0.35` | 5.4 | 卫道士 / 掠夺者，≈ 玩家冲刺（5.6） |
+| `0.40` | 7.0 | **比冲刺玩家还快** |
+| `0.50` | 11.0 | 明显失真 |
+| `≥1.0` | 线性，1.0 → 44 | 基本等于瞬移 |
+
+想让怪“快 20%”，系数乘 `1.1` 就够了（`1.1² = 1.21`）；乘 1.5 实际快了 2.25 倍——**这是绝大多数“我的怪为什么飞起来”的根因**。
+
+### 6.4 导航系数/突袭系数怎么取
+
+| x | 效果 |
+|---|---|
+| `1.0` | 正常，只用属性值 |
+| `1.1 ~ 1.2` | 略快，适合追击 |
+| `1.3 ~ 1.4` | 明显加速，**推荐上限** |
+| `1.5 ~ 2.0` | 已经有“漂移”感，慎用 |
+| `≥3` | 速度变成 9 倍以上，基本瞬移，不要用 |
+
+### 6.5 原版参考值
+
+| 生物 | `MOVEMENT_SPEED` | 说明 |
+|---|---|---|
+| 玩家 | `0.1` | 但不走平方公式，实际 4.32 格/秒 |
+| 僵尸 | `0.23` | 2.3 格/秒 |
+| 骷髅 / 苦力怕 / 铁傀儡 / 女巫 | `0.25` | |
+| 蜘蛛 / 末影人 / 狼 / 狐狸 / 劫掠兽 / 监守者 | `0.3` | |
+| 卫道士 / 掠夺者 / 猪灵 | `0.35` | 追玩家用 |
+| 村民 | `0.5` | 是属性高，但导航系数只有 0.5 |
+| 骆驼 `0.09`、悦灵/嗅探兽 `0.1` | | 慢速 |
+| 鱼/青蛙/美西螈 `1.0`、海豚 `1.2` | | **水中**才用这个值，和陆地不可比 |
+
+### 6.6 `AttributeSupplier.Builder.add` 是覆盖基础值
+
+```java
+Zombie.createAttributes()               // 已有 MOVEMENT_SPEED=0.23
+        .add(Attributes.MOVEMENT_SPEED, 0.4F)   // 覆盖成 0.4，不是 0.23+0.4
+```
+
+- `.add(attr, v)` = 设**基础值**，覆盖父类给的值。
+- 想“在原值上加”必须用 `AttributeModifier`，不能靠 `.add`。
+
+### 6.7 `AttributeModifier` 三种运算（1.21 名字）
+
+| Operation | 公式 | 用途 |
+|---|---|---|
+| `ADD_VALUE` | `base + x` | 加固定值（如最大生命 -1） |
+| `ADD_MULTIPLIED_BASE` | `base + base × x` | **百分比加成**（+10% 写 0.1） |
+| `ADD_MULTIPLIED_TOTAL` | `(base + ΣADD_VALUE) × (1 + Σx)` | 最终乘算 |
+
+旧版名称：`ADDITION` / `MULTIPLY_BASE` / `MULTIPLY_TOTAL`。
+
+### 6.8 其他属性参考范围
+
+| 属性 | 原版范围 | 备注 |
+|---|---|---|
+| `MAX_HEALTH` | 普通怪 10~30；铁傀儡/劫掠兽 100；监守者 500 | 基础 20 |
+| `ATTACK_DAMAGE` | 普通怪 2~5；铁傀儡 15；劫掠兽 12；监守者 30 | 空手玩家 1 |
+| `ARMOR` | 0~2（僵尸自带 2）；钻石套 20 | 每点减 4% 伤害 |
+| `ARMOR_TOUGHNESS` | 0~20 | 只影响高伤害衰减 |
+| `KNOCKBACK_RESISTANCE` | 0~1 | 1 = 完全免疫（铁傀儡、监守者） |
+| `ATTACK_KNOCKBACK` | 0~1.5 | 劫掠兽 / 监守者 1.5 |
+| `FOLLOW_RANGE` | 默认 16；僵尸 35；掠夺者 32；末影人 64 | 目标搜索半径 |
+| `STEP_HEIGHT` | 默认 0.6；1.0 = 能直接上 1 格 | 劫掠兽 / 铁傀儡 / 末影人 |
+
+---
+
+## 7. 攻击 doHurtTarget
 
 - **必须用 `Mob` 的 `doHurtTarget`**，统一攻击入口。
 - **不检查距离**：调用前必须由 Goal 自己判定距离。
@@ -158,7 +270,7 @@ public enum Flag { MOVE, LOOK, JUMP, TARGET; }
 
 ---
 
-## 7. 自定义 Goal 的姿势清单
+## 8. 自定义 Goal 的姿势清单
 
 1. **声明 Flag**：不占 MOVE 不动，不占 LOOK 不转头。
 2. **覆写 requiresUpdateEveryTick**：直驱移动的 Goal 必须返回 `true`。
@@ -167,7 +279,7 @@ public enum Flag { MOVE, LOOK, JUMP, TARGET; }
 
 ---
 
-## 8. 常见坑速查
+## 9. 常见坑速查
 
 | 坑 | 症状 / 解释 |
 |---|---|
@@ -179,3 +291,6 @@ public enum Flag { MOVE, LOOK, JUMP, TARGET; }
 | 动态目标疯狂 `moveTo` | 每次同步跑 A*，代价高且导致走走停停 |
 | 用 `doHurtTarget` 前没判距离/冷却 | 隔空打人、每 tick 狂打、无 swing |
 | 跨端读 AI 状态 | `travel`/AI 只在服务端权威，客户端渲染必须读同步字段 |
+| 把 `moveTo` 第二参数当速度值 | 它是**乘数**：`0.4` 配属性 `0.4` = 7 格/秒，比冲刺玩家还快 |
+| 想快 20% 就乘 1.2 | 平方关系，实际快 44%；乘 1.1 才是快 21% |
+| 用 `.add(MOVEMENT_SPEED, x)` 想“加成” | 它是覆盖基础值，父类的 0.23 会被丢掉 |

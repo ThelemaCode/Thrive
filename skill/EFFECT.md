@@ -326,7 +326,7 @@ addAttributeModifier(Holder<Attribute> attribute, ResourceLocation id,
 
 ### 7.2.1 拿 `MAX_HEALTH` 做「减血上限」的三个坑
 
-以 `AlkalineBurn`（`-1.0`，`ADD_VALUE`，作用于 `Attributes.MAX_HEALTH`）为例：
+以 `Saponification`（`-1.0`，`ADD_VALUE`，作用于 `Attributes.MAX_HEALTH`）为例：
 
 | 现象 | 原因 |
 |---|---|
@@ -466,7 +466,7 @@ public class AlkaliNeutralizerItem extends Item {
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         if (!level.isClientSide) {
-            entity.removeEffectsCuredBy(AlkalineBurn.ALKALI);
+            entity.removeEffectsCuredBy(Saponification.ALKALI);
         }
         return super.finishUsingItem(stack, level, entity);
     }

@@ -123,7 +123,7 @@
   "effect.thrive.blinding": "炫目",
   "effect.thrive.milk": "牛奶",
   "effect.thrive.moss": "苔藓",
-  "effect.thrive.alkaline_burn": "碱质灼烧",
+  "effect.thrive.saponification": "皂化反应",
   "effect.thrive.dehydration": "脱水",
 
 
@@ -146,7 +146,8 @@
   "entity.thrive.sun": "太阳",
   "entity.thrive.primed_sun_berry": "点燃的太阳浆果",
   "entity.thrive.diffusion_zone": "扩散物区域",
-
+  "entity.thrive.alkaline_zombie": "碱化僵尸",
+  "entity.thrive.salt_skeleton": "盐骸",
 
 
   "subtitles.thrive.sun_berry_ignite": "太阳浆果：被点燃",

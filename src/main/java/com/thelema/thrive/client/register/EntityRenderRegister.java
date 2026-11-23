@@ -4,6 +4,8 @@ import com.thelema.thrive.client.model.entity.GardenBeeModel;
 import com.thelema.thrive.client.render.entity.*;
 import com.thelema.thrive.register.EntityRegister;
 import net.minecraft.client.renderer.entity.NoopRenderer;
+import net.minecraft.client.renderer.entity.SkeletonRenderer;
+import net.minecraft.client.renderer.entity.ZombieRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -28,6 +30,9 @@ public class EntityRenderRegister {
         e.registerEntityRenderer(EntityRegister.DIFFUSION_ZONE.get(), NoopRenderer::new);
         e.registerEntityRenderer(EntityRegister.DESERT_POPLAR_BOAT.get(), ctx -> new ThriveBoatRenderer(ctx, false));
         e.registerEntityRenderer(EntityRegister.DESERT_POPLAR_CHEST_BOAT.get(), ctx -> new ThriveBoatRenderer(ctx, true));
+        e.registerEntityRenderer(EntityRegister.SALT_SKELETON.get(), SkeletonRenderer::new);
+        e.registerEntityRenderer(EntityRegister.ALKALINE_ZOMBIE.get(), ZombieRenderer::new);
+        e.registerEntityRenderer(EntityRegister.BEAM.get(), BeamRenderer::new);
     }
 
     @SubscribeEvent

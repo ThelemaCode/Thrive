@@ -32,7 +32,11 @@ public class EntityRegister {
 
     public static final DeferredHolder<EntityType<?>, EntityType<MossyZombie>> MOSSY_ZOMBIE =
             ENTITIES.register("mossy_zombie", () -> EntityType.Builder.of(MossyZombie::new, MobCategory.MONSTER)
-                    .sized(0.6f, 1.8f)
+                    .sized(0.6F, 1.95F)
+                    .eyeHeight(1.74F)
+                    .passengerAttachments(2.0125F)
+                    .ridingOffset(-0.7F)
+                    .clientTrackingRange(8)
                     .build("mossy_zombie"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<PrimedLanternBerry>> PRIMED_LANTERN_BERRY =
@@ -111,6 +115,31 @@ public class EntityRegister {
                     .clientTrackingRange(10)
                     .build("desert_poplar_chest_boat"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<SaltSkeleton>> SALT_SKELETON =
+            ENTITIES.register("salt_skeleton", () -> EntityType.Builder
+                    .of(SaltSkeleton::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.99F)
+                    .eyeHeight(1.74F)
+                    .ridingOffset(-0.7F)
+                    .clientTrackingRange(8)
+                    .build("salt_skeleton"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<AlkalineZombie>> ALKALINE_ZOMBIE =
+            ENTITIES.register("alkaline_zombie", () -> EntityType.Builder
+                    .of(AlkalineZombie::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F)
+                    .eyeHeight(1.74F)
+                    .passengerAttachments(2.0125F)
+                    .ridingOffset(-0.7F)
+                    .clientTrackingRange(8)
+                    .build("alkaline_zombie"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<Beam>> BEAM =
+            ENTITIES.register("beam", () -> EntityType.Builder
+                    .of(Beam::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .build("beam"));
+
     public static void register(IEventBus bus) {
         ENTITIES.register(bus);
     }
@@ -125,6 +154,8 @@ public class EntityRegister {
         event.put(GARDEN_PILLAGER.get(), GardenPillager.createAttributes().build());
         event.put(GARDEN_WITCH.get(), GardenWitch.createAttributes().build());
         event.put(VORTEX_BREEZE.get(), VortexBreeze.createAttributes().build());
+        event.put(SALT_SKELETON.get(), SaltSkeleton.createAttributes().build());
+        event.put(ALKALINE_ZOMBIE.get(), AlkalineZombie.createAttributes().build());
     }
 
     @SubscribeEvent
@@ -135,6 +166,8 @@ public class EntityRegister {
         event.register(GARDEN_WITCH.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
         event.register(VORTEX_BREEZE.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mob::checkMobSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
         event.register(EntityType.BREEZE, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mob::checkMobSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        event.register(SALT_SKELETON.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mob::checkMobSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        event.register(ALKALINE_ZOMBIE.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mob::checkMobSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
     }
 
     // 允许一些生物生成在草丛，地毯这些地方
